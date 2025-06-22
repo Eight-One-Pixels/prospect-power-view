@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+
 
 const Profile = () => {
   const { user, userRole } = useAuth();
@@ -16,6 +18,8 @@ const Profile = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     if (user) {
@@ -93,6 +97,7 @@ const Profile = () => {
       
       <div className="container mx-auto px-6 py-8">
         <div className="mb-8">
+          <p className="text-sm text-gray-500 cursor-pointer" onClick={() => navigate("/") }>&larr; Back to Dashboard</p><br />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Profile
           </h1>

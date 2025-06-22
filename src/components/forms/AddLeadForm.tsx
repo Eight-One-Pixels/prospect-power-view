@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -48,6 +47,27 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
         });
 
       if (error) throw error;
+
+      // Increment current_value for 'leads' goal
+      const today = new Date();
+      const { data: goalData, error: goalError } = await supabase
+        .from('goals')
+        .select('current_value')
+        .eq('user_id', user.id)
+        .eq('goal_type', 'leads')
+        .lte('period_start', today.toISOString().split('T')[0])
+        .gte('period_end', today.toISOString().split('T')[0])
+        .single();
+
+      if (goalError) throw goalError;
+
+      await supabase
+        .from('goals')
+        .update({ current_value: (goalData?.current_value ?? 0) + 1 })
+        .eq('user_id', user.id)
+        .eq('goal_type', 'leads')
+        .lte('period_start', today.toISOString().split('T')[0])
+        .gte('period_end', today.toISOString().split('T')[0]);
 
       toast.success("Lead added successfully!");
       onOpenChange(false);

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ export const RepDashboard = () => {
   const [setGoalsOpen, setSetGoalsOpen] = useState(false);
 
   // Fetch user's stats
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['rep-stats', user?.id, selectedPeriod],
     queryFn: async () => {
       if (!user) return null;
@@ -121,8 +120,8 @@ export const RepDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div onClick={() => setLogVisitOpen(true)} className="flex flex-wrap gap-4">
-        <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
+      <div className="flex flex-wrap gap-4">
+        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
           Log Visit
         </Button>
@@ -203,9 +202,18 @@ export const RepDashboard = () => {
           </div>
         </Card>
       )}
-      <LogVisitForm open={logVisitOpen} onOpenChange={setLogVisitOpen} />
-      <AddLeadForm open={addLeadOpen} onOpenChange={setAddLeadOpen} />
-      <SetGoalsForm open={setGoalsOpen} onOpenChange={setSetGoalsOpen} />
+      <LogVisitForm open={logVisitOpen} onOpenChange={(open) => {
+        setLogVisitOpen(open);
+        if (!open) refetch();
+      }} />
+      <AddLeadForm open={addLeadOpen} onOpenChange={(open) => {
+        setAddLeadOpen(open);
+        if (!open) refetch();
+      }} />
+      <SetGoalsForm open={setGoalsOpen} onOpenChange={(open) => {
+        setSetGoalsOpen(open);
+        if (!open) refetch();
+      }} />
     </div>
   );
 };

@@ -15,10 +15,7 @@ export const ManagerDashboard = () => {
       // Get all team members
       const { data: teamMembers } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role)
-        `);
+        .select('*');
 
       // Get total visits this month
       const { count: totalVisits } = await supabase
