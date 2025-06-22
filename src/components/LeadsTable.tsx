@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -131,7 +130,7 @@ export const LeadsTable = ({ filters }: LeadsTableProps) => {
             <TableRow className="border-gray-200">
               <TableHead className="font-semibold text-gray-900">Contact</TableHead>
               <TableHead className="font-semibold text-gray-900">Company</TableHead>
-              <TableHead className="font-semibold text-gray-900">Source</TableHea
+              <TableHead className="font-semibold text-gray-900">Source</TableHead>
               <TableHead className="font-semibold text-gray-900">Status</TableHead>
               <TableHead className="font-semibold text-gray-900">Value</TableHead>
               <TableHead className="font-semibold text-gray-900">Assignee</TableHead>

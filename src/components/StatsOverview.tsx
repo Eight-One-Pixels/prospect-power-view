@@ -53,10 +53,26 @@ export const StatsOverview = ({ filters }: StatsOverviewProps) => {
 
   const getColorClasses = (color: string) => {
     const colors = {
-      blue: "from-blue-500 to-blue-600 text-blue-600 bg-blue-50",
-      green: "from-green-500 to-green-600 text-green-600 bg-green-50",
-      purple: "from-purple-500 to-purple-600 text-purple-600 bg-purple-50",
-      orange: "from-orange-500 to-orange-600 text-orange-600 bg-orange-50"
+      blue: {
+        gradient: "from-blue-500 to-blue-600",
+        text: "text-blue-600",
+        bg: "bg-blue-50"
+      },
+      green: {
+        gradient: "from-green-500 to-green-600",
+        text: "text-green-600",
+        bg: "bg-green-50"
+      },
+      purple: {
+        gradient: "from-purple-500 to-purple-600",
+        text: "text-purple-600",
+        bg: "bg-purple-50"
+      },
+      orange: {
+        gradient: "from-orange-500 to-orange-600",
+        text: "text-orange-600",
+        bg: "bg-orange-50"
+      }
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
@@ -64,8 +80,7 @@ export const StatsOverview = ({ filters }: StatsOverviewProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 animate-fade-in">
       {stats.map((stat, index) => {
-        const colorClasses = getColorClasses(stat.color);
-        const [gradientClasses, textColor, bgColor] = colorClasses.split(' text-')[0], colorClasses.split(' text-')[1].split(' bg-')[0], colorClasses.split(' bg-')[1];
+        const colorConfig = getColorClasses(stat.color);
         
         return (
           <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm">
@@ -75,7 +90,7 @@ export const StatsOverview = ({ filters }: StatsOverviewProps) => {
                 <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
                 <p className="text-xs text-gray-500">{stat.description}</p>
               </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${gradientClasses}`}>
+              <div className={`p-3 rounded-xl bg-gradient-to-r ${colorConfig.gradient}`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
             </div>
