@@ -9,30 +9,276 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversions: {
+        Row: {
+          commission_amount: number | null
+          commission_rate: number | null
+          conversion_date: string
+          created_at: string | null
+          id: string
+          lead_id: string
+          notes: string | null
+          rep_id: string
+          revenue_amount: number
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          conversion_date?: string
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+          rep_id: string
+          revenue_amount: number
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_rate?: number | null
+          conversion_date?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          rep_id?: string
+          revenue_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_visits: {
+        Row: {
+          company_name: string
+          contact_person: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          id: string
+          lead_generated: boolean | null
+          lead_id: string | null
+          notes: string | null
+          outcome: string | null
+          rep_id: string
+          visit_date: string
+          visit_type: Database["public"]["Enums"]["visit_type"]
+        }
+        Insert: {
+          company_name: string
+          contact_person?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          lead_generated?: boolean | null
+          lead_id?: string | null
+          notes?: string | null
+          outcome?: string | null
+          rep_id: string
+          visit_date?: string
+          visit_type: Database["public"]["Enums"]["visit_type"]
+        }
+        Update: {
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          lead_generated?: boolean | null
+          lead_id?: string | null
+          notes?: string | null
+          outcome?: string | null
+          rep_id?: string
+          visit_date?: string
+          visit_type?: Database["public"]["Enums"]["visit_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_visits_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string | null
+          current_value: number | null
+          description: string | null
+          goal_type: string
+          id: string
+          period_end: string
+          period_start: string
+          target_value: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          goal_type: string
+          id?: string
+          period_end: string
+          period_start: string
+          target_value: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          target_value?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          address: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string
+          contact_phone: string
+          created_at: string | null
+          created_by: string
+          estimated_value: number | null
+          id: string
+          industry: string | null
+          next_follow_up: string | null
+          notes: string | null
+          source: string
+          status: Database["public"]["Enums"]["lead_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name: string
+          contact_phone: string
+          created_at?: string | null
+          created_by: string
+          estimated_value?: number | null
+          id?: string
+          industry?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          source: string
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string | null
+          created_by?: string
+          estimated_value?: number | null
+          id?: string
+          industry?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          source?: string
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          department: string | null
+          email: string | null
           full_name: string | null
+          hire_date: string | null
           id: string
+          is_active: boolean | null
+          manager_id: string | null
+          phone: string | null
           position: string | null
           role: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          department?: string | null
+          email?: string | null
           full_name?: string | null
+          hire_date?: string | null
           id: string
+          is_active?: boolean | null
+          manager_id?: string | null
+          phone?: string | null
           position?: string | null
           role?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          department?: string | null
+          email?: string | null
           full_name?: string | null
+          hire_date?: string | null
           id?: string
+          is_active?: boolean | null
+          manager_id?: string | null
+          phone?: string | null
           position?: string | null
           role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -41,10 +287,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: boolean
+      }
+      is_manager_or_above: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      lead_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "proposal"
+        | "negotiation"
+        | "closed_won"
+        | "closed_lost"
+      user_role: "rep" | "manager" | "director" | "admin"
+      visit_type:
+        | "cold_call"
+        | "follow_up"
+        | "presentation"
+        | "meeting"
+        | "phone_call"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -159,6 +429,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lead_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal",
+        "negotiation",
+        "closed_won",
+        "closed_lost",
+      ],
+      user_role: ["rep", "manager", "director", "admin"],
+      visit_type: [
+        "cold_call",
+        "follow_up",
+        "presentation",
+        "meeting",
+        "phone_call",
+      ],
+    },
   },
 } as const

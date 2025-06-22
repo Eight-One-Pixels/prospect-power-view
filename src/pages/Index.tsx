@@ -1,45 +1,40 @@
 
-import { useState } from "react";
-import { DashboardHeader } from "@/components/DashboardHeader";
-import { StatsOverview } from "@/components/StatsOverview";
-import { LeadsTable } from "@/components/LeadsTable";
-import { SalesChart } from "@/components/SalesChart";
-import { TeamPerformance } from "@/components/TeamPerformance";
-import { FilterPanel } from "@/components/FilterPanel";
+import { Navigation } from "@/components/Navigation";
+import { RepDashboard } from "@/components/dashboard/RepDashboard";
+import { ManagerDashboard } from "@/components/dashboard/ManagerDashboard";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [filters, setFilters] = useState({
-    dateRange: "30",
-    leadSource: "all",
-    status: "all",
-    assignee: "all"
-  });
+  const { userRole, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const isManager = userRole && ['manager', 'director', 'admin'].includes(userRole);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Navigation />
+      
       <div className="container mx-auto px-6 py-8">
-        <DashboardHeader />
-        
         <div className="mb-8">
-          <FilterPanel filters={filters} onFiltersChange={setFilters} />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            {isManager ? 'Management Dashboard' : 'Sales Dashboard'}
+          </h1>
+          <p className="text-lg text-gray-600">
+            {isManager 
+              ? 'Monitor team performance and manage your sales organization' 
+              : 'Track your visits, leads, and sales performance'
+            }
+          </p>
         </div>
 
-        <div className="mb-8">
-          <StatsOverview filters={filters} />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
-          <div className="xl:col-span-2">
-            <SalesChart filters={filters} />
-          </div>
-          <div>
-            <TeamPerformance filters={filters} />
-          </div>
-        </div>
-
-        <div>
-          <LeadsTable filters={filters} />
-        </div>
+        {isManager ? <ManagerDashboard /> : <RepDashboard />}
       </div>
     </div>
   );
