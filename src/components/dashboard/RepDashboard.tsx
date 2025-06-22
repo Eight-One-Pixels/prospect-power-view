@@ -6,10 +6,17 @@ import { Plus, Target, Users, DollarSign, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AddLeadForm } from "@/components/forms/AddLeadForm";
+import { LogVisitForm } from "../forms/LogVisitForm";
+import { SetGoalsForm } from "../forms/SetGoalsForm";
+
 
 export const RepDashboard = () => {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [logVisitOpen, setLogVisitOpen] = useState(false);
+  const [setGoalsOpen, setSetGoalsOpen] = useState(false);
 
   // Fetch user's stats
   const { data: stats, isLoading } = useQuery({
@@ -114,16 +121,16 @@ export const RepDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
+      <div onClick={() => setLogVisitOpen(true)} className="flex flex-wrap gap-4">
         <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
           Log Visit
         </Button>
-        <Button variant="outline">
+        <Button onClick={() => setAddLeadOpen(true)} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
           Add Lead
         </Button>
-        <Button variant="outline">
+        <Button onClick={() => setSetGoalsOpen(true)} variant="outline">
           <Target className="h-4 w-4 mr-2" />
           Set Goals
         </Button>
@@ -196,6 +203,9 @@ export const RepDashboard = () => {
           </div>
         </Card>
       )}
+      <LogVisitForm open={logVisitOpen} onOpenChange={setLogVisitOpen} />
+      <AddLeadForm open={addLeadOpen} onOpenChange={setAddLeadOpen} />
+      <SetGoalsForm open={setGoalsOpen} onOpenChange={setSetGoalsOpen} />
     </div>
   );
 };
