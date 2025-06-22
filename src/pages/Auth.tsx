@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Eye, EyeOff, Building2 } from "lucide-react";
+import icon from '@/assets/icon.png';
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -86,9 +87,9 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Building2 className="h-8 w-8 text-indigo-600" />
+            <img src={icon} alt="Alo—Sales icon" className="h-8 w-8 text-indigo-600" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              SalesTracker
+              Alo—Sales
             </h1>
           </div>
           <p className="text-gray-600">Comprehensive sales management platform</p>

@@ -1,13 +1,15 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import icon from '@/assets/icon.png';
 
 export const Navigation = () => {
   const { user, userRole, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -32,9 +34,9 @@ export const Navigation = () => {
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-indigo-600" />
+            <img src={icon} alt="Alo—Sales icon" className="h-6 w-6 text-indigo-600" />
             <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              SalesTracker
+              Alo—Sales
             </h1>
           </div>
 
@@ -57,11 +59,11 @@ export const Navigation = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-white border shadow-lg" align="end">
-                <DropdownMenuItem className="gap-2">
+                <DropdownMenuItem className="gap-2" onClick={() => navigate("/profile")}> 
                   <User className="h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2">
+                <DropdownMenuItem className="gap-2" onClick={() => navigate("/settings")}> 
                   <Settings className="h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
