@@ -17,12 +17,13 @@ interface AddLeadFormProps {
 
 export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
   const { user } = useAuth();
-  const [customerName, setCustomerName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [leadSource, setLeadSource] = useState("");
-  const [status, setStatus] = useState("new");
+  const [source, setSource] = useState("");
+  const [status, setStatus] = useState<"new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost">("new");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,11 +37,12 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
         .from('leads')
         .insert({
           created_by: user.id,
-          customer_name: customerName,
-          email,
-          phone,
+          company_name: companyName,
+          contact_name: contactName,
+          contact_email: contactEmail,
+          contact_phone: contactPhone,
           address,
-          lead_source: leadSource,
+          source,
           status,
           notes
         });
@@ -50,11 +52,12 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
       toast.success("Lead added successfully!");
       onOpenChange(false);
       // Reset form
-      setCustomerName("");
-      setEmail("");
-      setPhone("");
+      setCompanyName("");
+      setContactName("");
+      setContactEmail("");
+      setContactPhone("");
       setAddress("");
-      setLeadSource("");
+      setSource("");
       setStatus("new");
       setNotes("");
     } catch (error) {
@@ -73,31 +76,42 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="customerName">Customer Name</Label>
+            <Label htmlFor="companyName">Company Name</Label>
             <Input
-              id="customerName"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              id="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="contactName">Contact Name</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="contactName"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="contactEmail">Email</Label>
             <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              id="contactEmail"
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contactPhone">Phone</Label>
+            <Input
+              id="contactPhone"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              required
             />
           </div>
 
@@ -111,8 +125,8 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="leadSource">Lead Source</Label>
-            <Select value={leadSource} onValueChange={setLeadSource}>
+            <Label htmlFor="source">Lead Source</Label>
+            <Select value={source} onValueChange={setSource} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select lead source" />
               </SelectTrigger>
@@ -129,7 +143,7 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
@@ -138,6 +152,7 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
                 <SelectItem value="contacted">Contacted</SelectItem>
                 <SelectItem value="qualified">Qualified</SelectItem>
                 <SelectItem value="proposal">Proposal Sent</SelectItem>
+                <SelectItem value="negotiation">Negotiation</SelectItem>
                 <SelectItem value="closed_won">Closed Won</SelectItem>
                 <SelectItem value="closed_lost">Closed Lost</SelectItem>
               </SelectContent>

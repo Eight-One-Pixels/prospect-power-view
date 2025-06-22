@@ -22,9 +22,9 @@ interface LogVisitFormProps {
 export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
   const { user } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
-  const [customerName, setCustomerName] = useState("");
-  const [address, setAddress] = useState("");
-  const [visitType, setVisitType] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [visitType, setVisitType] = useState<"cold_call" | "follow_up" | "presentation" | "meeting" | "phone_call">("cold_call");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,8 +39,8 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
         .insert({
           rep_id: user.id,
           visit_date: format(date, 'yyyy-MM-dd'),
-          customer_name: customerName,
-          address,
+          company_name: companyName,
+          contact_person: contactPerson,
           visit_type: visitType,
           notes
         });
@@ -50,9 +50,9 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
       toast.success("Visit logged successfully!");
       onOpenChange(false);
       // Reset form
-      setCustomerName("");
-      setAddress("");
-      setVisitType("");
+      setCompanyName("");
+      setContactPerson("");
+      setVisitType("cold_call");
       setNotes("");
       setDate(new Date());
     } catch (error) {
@@ -94,36 +94,36 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="customerName">Customer Name</Label>
+            <Label htmlFor="companyName">Company Name</Label>
             <Input
-              id="customerName"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              id="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="contactPerson">Contact Person</Label>
             <Input
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
+              id="contactPerson"
+              value={contactPerson}
+              onChange={(e) => setContactPerson(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="visitType">Visit Type</Label>
-            <Select value={visitType} onValueChange={setVisitType} required>
+            <Select value={visitType} onValueChange={(value) => setVisitType(value as typeof visitType)} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select visit type" />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg">
-                <SelectItem value="initial">Initial Visit</SelectItem>
+                <SelectItem value="cold_call">Cold Call</SelectItem>
                 <SelectItem value="follow_up">Follow Up</SelectItem>
                 <SelectItem value="presentation">Presentation</SelectItem>
-                <SelectItem value="service">Service Call</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="phone_call">Phone Call</SelectItem>
               </SelectContent>
             </Select>
           </div>
