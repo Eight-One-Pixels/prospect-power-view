@@ -1,8 +1,9 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, Building2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { LogOut, User, Settings, Building2, Users2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import icon from '@/assets/icon.png';
@@ -29,6 +30,8 @@ export const Navigation = () => {
       .slice(0, 2);
   };
 
+  const isAdmin = userRole === 'admin';
+
   return (
     <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
@@ -49,6 +52,7 @@ export const Navigation = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
                       {user?.user_metadata?.full_name 
                         ? getInitials(user.user_metadata.full_name)
@@ -67,6 +71,16 @@ export const Navigation = () => {
                   <Settings className="h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2" onClick={() => navigate("/manage-users")}> 
+                      <Users2 className="h-4 w-4" />
+                      Manage Users
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   Sign Out

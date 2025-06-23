@@ -218,7 +218,8 @@ export type Database = {
           manager_id: string | null
           phone: string | null
           position: string | null
-          role: string | null
+          role_id: string | null
+          sys_role: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -232,7 +233,8 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           position?: string | null
-          role?: string | null
+          role_id?: string | null
+          sys_role?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -246,14 +248,29 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           position?: string | null
-          role?: string | null
+          role_id?: string | null
+          sys_role?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_role"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_manager_id_fkey"
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_roles"
             referencedColumns: ["id"]
           },
         ]
@@ -284,7 +301,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_with_roles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          full_name: string | null
+          hire_date: string | null
+          id: string | null
+          is_active: boolean | null
+          manager_id: string | null
+          phone: string | null
+          position: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          role_id: string | null
+          sys_role: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_role"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

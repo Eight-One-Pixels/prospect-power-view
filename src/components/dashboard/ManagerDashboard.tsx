@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Users, TrendingUp, Target, DollarSign } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export const ManagerDashboard = () => {
   // Fetch team overview stats
@@ -12,9 +14,9 @@ export const ManagerDashboard = () => {
       const today = new Date();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       
-      // Get all team members
+      // Get all team members with their roles
       const { data: teamMembers } = await supabase
-        .from('profiles')
+        .from('profiles_with_roles')
         .select('*');
 
       // Get total visits this month
@@ -37,25 +39,68 @@ export const ManagerDashboard = () => {
 
       const totalRevenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
 
-      // Get individual rep performance
-      const { data: repPerformance } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          daily_visits!daily_visits_rep_id_fkey(id),
-          leads!leads_created_by_fkey(id),
-          conversions!conversions_rep_id_fkey(revenue_amount)
-        `);
-
       return {
         teamSize: teamMembers?.length || 0,
         totalVisits: totalVisits || 0,
         totalLeads: totalLeads || 0,
         totalRevenue,
         totalConversions: conversions?.length || 0,
-        repPerformance: repPerformance || []
+        teamMembers: teamMembers || []
       };
+    }
+  });
+
+  // Fetch individual rep performance
+  const { data: repPerformance, isLoading: isLoadingPerformance } = useQuery({
+    queryKey: ['rep-performance'],
+    queryFn: async () => {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      // Get all reps with their performance data
+      const { data: reps } = await supabase
+        .from('profiles_with_roles')
+        .select('*')
+        .in('role', ['rep', 'manager']);
+
+      if (!reps) return [];
+
+      const repData = await Promise.all(
+        reps.map(async (rep) => {
+          // Get visits for this rep this month
+          const { count: visits } = await supabase
+            .from('daily_visits')
+            .select('*', { count: 'exact', head: true })
+            .eq('rep_id', rep.id)
+            .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
+
+          // Get leads for this rep this month
+          const { count: leads } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('created_by', rep.id)
+            .gte('created_at', startOfMonth.toISOString());
+
+          // Get conversions and revenue for this rep this month
+          const { data: conversions } = await supabase
+            .from('conversions')
+            .select('revenue_amount')
+            .eq('rep_id', rep.id)
+            .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
+
+          const revenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
+
+          return {
+            ...rep,
+            visits: visits || 0,
+            leads: leads || 0,
+            revenue,
+            conversions: conversions?.length || 0
+          };
+        })
+      );
+
+      return repData;
     }
   });
 
@@ -100,6 +145,33 @@ export const ManagerDashboard = () => {
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (isLoading || isLoadingPerformance) {
+    return (
+      <div className="space-y-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-24 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -128,29 +200,49 @@ export const ManagerDashboard = () => {
       {/* Team Performance Table */}
       <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
         <h3 className="text-xl font-bold text-gray-900 mb-4">Team Performance</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-900">Representative</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900">Visits</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900">Leads</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-900">Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teamStats?.repPerformance?.map((rep: any, index: number) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-gray-900">{rep.full_name || "Unknown"}</td>
-                  <td className="py-3 px-4 text-gray-600">{rep.daily_visits?.length || 0}</td>
-                  <td className="py-3 px-4 text-gray-600">{rep.leads?.length || 0}</td>
-                  <td className="py-3 px-4 text-gray-600">
-                    ${rep.conversions?.reduce((sum: number, conv: any) => sum + Number(conv.revenue_amount || 0), 0)?.toLocaleString() || 0}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {repPerformance?.map((rep, index) => (
+            <div key={index} className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold">
+                    {rep.full_name ? getInitials(rep.full_name) : 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{rep.full_name || rep.email}</h4>
+                      <p className="text-sm text-gray-600 capitalize">{rep.role}</p>
+                    </div>
+                    <Badge variant={rep.role === 'admin' ? 'default' : 'secondary'}>
+                      {rep.role}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-500">Visits</p>
+                      <p className="font-semibold text-gray-900">{rep.visits}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Leads</p>
+                      <p className="font-semibold text-gray-900">{rep.leads}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Conversions</p>
+                      <p className="font-semibold text-gray-900">{rep.conversions}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Revenue</p>
+                      <p className="font-semibold text-green-600">${rep.revenue.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
     </div>
