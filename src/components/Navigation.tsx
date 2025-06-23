@@ -65,7 +65,7 @@ export const Navigation = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
               {/* <span className="text-white font-bold text-sm">AS</span> */}
               <img src={icon} alt="Alo-Sales" />
             </div>
