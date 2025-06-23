@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
@@ -77,7 +76,7 @@ const ManageUsers = () => {
         .upsert({
           user_id: editingUser.id,
           role: newRole as any
-        });
+        }, { onConflict: 'user_id' });
 
       if (roleError) throw roleError;
 
@@ -95,12 +94,14 @@ const ManageUsers = () => {
 
   const toggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({ is_active: !isActive })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select();
 
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('No user updated');
 
       toast.success(`User ${!isActive ? 'activated' : 'deactivated'} successfully!`);
       loadUsers(); // Refresh the users list
