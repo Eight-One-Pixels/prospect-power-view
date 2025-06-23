@@ -1,24 +1,51 @@
 
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, Building2, Users2 } from "lucide-react";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import icon from '@/assets/icon.png';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
+import { 
+  Home, 
+  User, 
+  Settings, 
+  LogOut, 
+  ChevronDown,
+  Users,
+  Shield
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Navigation = () => {
   const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Get user profile for avatar
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id
+  });
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("Successfully signed out");
-    } catch (error) {
-      toast.error("Failed to sign out");
-    }
+    await signOut();
+    navigate("/auth");
   };
 
   const getInitials = (name: string) => {
@@ -33,57 +60,73 @@ export const Navigation = () => {
   const isAdmin = userRole === 'admin';
 
   return (
-    <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img src={icon} alt="Alo—Sales icon" className="h-6 w-6 text-indigo-600" />
-            <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Alo—Sales
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
-              Role: <span className="font-semibold capitalize text-indigo-600">{userRole}</span>
+    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">AS</span>
             </div>
-            
-            <DropdownMenu>
+            <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Alo-Sales
+            </span>
+          </Link>
+
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" asChild>
+              <Link to="/" className="flex items-center space-x-2">
+                <Home className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+            </Button>
+
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-                      {user?.user_metadata?.full_name 
-                        ? getInitials(user.user_metadata.full_name)
+                <Button variant="ghost" className="flex items-center space-x-2 px-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url || ''} />
+                    <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold">
+                      {profile?.full_name 
+                        ? getInitials(profile.full_name)
                         : user?.email ? getInitials(user.email) : 'U'
                       }
                     </AvatarFallback>
                   </Avatar>
+                  <span className="hidden sm:inline text-sm font-medium">
+                    {profile?.full_name || user?.email}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white border shadow-lg" align="end">
-                <DropdownMenuItem className="gap-2" onClick={() => navigate("/profile")}> 
-                  <User className="h-4 w-4" />
-                  Profile
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2" onClick={() => navigate("/settings")}> 
-                  <Settings className="h-4 w-4" />
-                  Settings
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center space-x-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2" onClick={() => navigate("/manage-users")}> 
-                      <Users2 className="h-4 w-4" />
-                      Manage Users
+                    <DropdownMenuItem asChild>
+                      <Link to="/manage-users" className="flex items-center space-x-2 cursor-pointer">
+                        <Shield className="h-4 w-4" />
+                        <Users className="h-4 w-4" />
+                        <span>Manage Users</span>
+                      </Link>
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Sign Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
