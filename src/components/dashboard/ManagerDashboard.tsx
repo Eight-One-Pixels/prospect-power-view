@@ -5,26 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Users, TrendingUp, Target, DollarSign } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
 
 export const ManagerDashboard = () => {
-  const { user } = useAuth();
-
-  // Get user profile for avatar
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id
-  });
-
   // Fetch team overview stats
   const { data: teamStats, isLoading } = useQuery({
     queryKey: ['team-stats'],
@@ -223,11 +205,11 @@ export const ManagerDashboard = () => {
             <div key={index} className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300">
               <div className="flex items-start gap-4">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.avatar_url || ''} />
+                  <AvatarImage src={rep?.avatar_url || ''} />
                   <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold">
-                    {profile?.full_name 
-                      ? getInitials(profile.full_name)
-                      : user?.email ? getInitials(user.email) : 'U'
+                    {rep?.full_name 
+                      ? getInitials(rep.full_name)
+                      : rep?.email ? getInitials(rep.email) : 'U'
                     }
                   </AvatarFallback>
                 </Avatar>
