@@ -114,7 +114,8 @@ export const NotificationCenter = () => {
       toast.success("Reminder email sent successfully");
     },
     onError: (error) => {
-      toast.error(`Failed to send reminder: ${error.message}`);
+      const errorMessage = (error instanceof Error) ? error.message : String(error);
+      toast.error(`Failed to send reminder: ${errorMessage}`);
     }
   });
 

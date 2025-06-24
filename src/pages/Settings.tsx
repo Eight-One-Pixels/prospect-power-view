@@ -59,8 +59,8 @@ const Settings = () => {
         throw error;
       }
 
-      if (!error && data && (data as any).preferred_currency) {
-        setPreferredCurrency((data as any).preferred_currency);
+      if (data?.preferred_currency) {
+        setPreferredCurrency(data.preferred_currency);
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
