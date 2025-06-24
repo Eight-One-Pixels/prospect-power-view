@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ReportFilters } from "./ReportFilters";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 
 type LeadStatus = "all" | "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
 
@@ -24,6 +24,7 @@ export const LeadReports = () => {
   });
   const [statusFilter, setStatusFilter] = useState<LeadStatus>("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, base: string } | null>(null);
 
   const { data: leads, isLoading } = useQuery({
     queryKey: ['lead-reports', user?.id, userRole, dateRange, statusFilter, sourceFilter],
@@ -63,6 +64,30 @@ export const LeadReports = () => {
     },
     enabled: !!user
   });
+
+  useEffect(() => {
+    async function convertAll() {
+      if (!user || !leads) return;
+      const { base } = await getUserCurrencyContext(user);
+      let revenue = 0;
+      if (leads.length > 0) {
+        const revenueArr = await Promise.all(
+          leads.map(async (lead) => {
+            const amount = Number(lead.estimated_revenue) || 0;
+            const fromCurrency = lead.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        revenue = revenueArr.reduce((sum, val) => sum + val, 0);
+      }
+      setConvertedTotals({ revenue, base });
+    }
+    convertAll();
+  }, [user, leads]);
 
   const exportReport = () => {
     if (!leads || leads.length === 0) {
@@ -164,7 +189,9 @@ export const LeadReports = () => {
           <div className="text-sm text-gray-600">Total Leads</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">${totalEstimatedRevenue.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Est. Pipeline Value</div>
         </Card>
         <Card className="p-4">

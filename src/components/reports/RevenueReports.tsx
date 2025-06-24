@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,11 +63,20 @@ export const RevenueReports = () => {
           return convDate >= startOfMonth(month) && convDate <= endOfMonth(month);
         }) || [];
 
+        // Find the most common currency for the month, fallback to USD
+        const currencyCounts = monthConversions.reduce((acc, conv) => {
+          const currency = conv.currency || 'USD';
+          acc[currency] = (acc[currency] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        const mostCommonCurrency = Object.entries(currencyCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
+
         return {
           month: format(month, 'MMM yyyy'),
           revenue: monthConversions.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0),
           commission: monthConversions.reduce((sum, conv) => sum + (Number(conv.commission_amount) || 0), 0),
-          conversions: monthConversions.length
+          conversions: monthConversions.length,
+          currency: mostCommonCurrency
         };
       });
 
@@ -93,19 +102,100 @@ export const RevenueReports = () => {
     enabled: !!user
   });
 
-  const exportReport = () => {
+  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, commission: number, avgCommissionRate: number, base: string } | null>(null);
+  useEffect(() => {
+    async function convertAll() {
+      if (!user || !revenueData?.conversions) return;
+      const { base } = await getUserCurrencyContext(user);
+      let revenue = 0;
+      let commission = 0;
+      let avgCommissionRate = 0;
+      if (revenueData.conversions.length > 0) {
+        const revenueArr = await Promise.all(
+          revenueData.conversions.map(async (conv) => {
+            const amount = Number(conv.revenue_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        revenue = revenueArr.reduce((sum, val) => sum + val, 0);
+        const commissionArr = await Promise.all(
+          revenueData.conversions.map(async (conv) => {
+            const amount = Number(conv.commission_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        commission = commissionArr.reduce((sum, val) => sum + val, 0);
+        avgCommissionRate = revenue > 0 ? (commission / revenue * 100) : 0;
+      }
+      setConvertedTotals({ revenue, commission, avgCommissionRate, base });
+    }
+    convertAll();
+  }, [user, revenueData]);
+
+  const totalRevenue = revenueData?.conversions?.reduce((sum, conv) => 
+    sum + Number(conv.revenue_amount), 0
+  ) || 0;
+
+  const totalCommission = revenueData?.conversions?.reduce((sum, conv) => 
+    sum + (Number(conv.commission_amount) || 0), 0
+  ) || 0;
+
+  const avgCommissionRate = revenueData?.conversions?.length ? 
+    (totalCommission / totalRevenue * 100) : 0;
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  const [convertedExportRows, setConvertedExportRows] = useState<any[] | null>(null);
+  useEffect(() => {
+    async function convertExportRows() {
+      if (!user || !revenueData?.monthlyData) return;
+      const { base } = await getUserCurrencyContext(user);
+      // Convert monthlyData
+      const convertedRows = await Promise.all(
+        revenueData.monthlyData.map(async (item) => {
+          // For each month, convert revenue and commission
+          const revenue = await convertCurrency(item.revenue, item.currency, base).catch(() => item.revenue);
+          const commission = await convertCurrency(item.commission, item.currency, base).catch(() => item.commission);
+          return {
+            ...item,
+            revenue,
+            commission,
+            base
+          };
+        })
+      );
+      setConvertedExportRows(convertedRows);
+    }
+    convertExportRows();
+  }, [user, revenueData]);
+
+  const exportReport = async () => {
     if (!revenueData?.conversions || revenueData.conversions.length === 0) {
       toast.error("No data to export");
       return;
     }
-
+    // Wait for conversion if not ready
+    if (!convertedExportRows) {
+      toast.error("Currency conversion in progress, please try again in a moment.");
+      return;
+    }
     const csvContent = [
       ['Report Type', 'Revenue Analysis'],
       ['Period', `${dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : ''} to ${dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : ''}`],
       [''],
       ['Monthly Revenue'],
       ['Month', 'Revenue', 'Commission', 'Conversions'],
-      ...revenueData.monthlyData.map(item => [
+      ...convertedExportRows.map(item => [
         item.month,
         item.revenue,
         item.commission,
@@ -131,19 +221,6 @@ export const RevenueReports = () => {
     toast.success("Report exported successfully!");
   };
 
-  const totalRevenue = revenueData?.conversions?.reduce((sum, conv) => 
-    sum + Number(conv.revenue_amount), 0
-  ) || 0;
-
-  const totalCommission = revenueData?.conversions?.reduce((sum, conv) => 
-    sum + (Number(conv.commission_amount) || 0), 0
-  ) || 0;
-
-  const avgCommissionRate = revenueData?.conversions?.length ? 
-    (totalCommission / totalRevenue * 100) : 0;
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
   return (
     <div className="space-y-6">
       <ReportFilters
@@ -168,15 +245,21 @@ export const RevenueReports = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Total Revenue</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">${totalCommission.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.commission.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Total Commission</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">{avgCommissionRate.toFixed(1)}%</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.avgCommissionRate.toFixed(1)}%` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Avg Commission Rate</div>
         </Card>
         <Card className="p-4">
