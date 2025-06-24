@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, DollarSign, TrendingUp, Calendar } from "lucide-react";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
+import { useEffect, useState } from "react";
 
 interface ConversionsDetailPageProps {
   onBack: () => void;
@@ -38,6 +39,45 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
     },
     enabled: !!user
   });
+
+  // Currency conversion logic
+  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, commission: number, base: string } | null>(null);
+  useEffect(() => {
+    async function convertAll() {
+      if (!user || !conversions) return;
+      const { base } = await getUserCurrencyContext(user);
+      let revenue = 0;
+      let commission = 0;
+      if (conversions.length > 0) {
+        const revenueArr = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.revenue_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        revenue = revenueArr.reduce((sum, val) => sum + val, 0);
+        const commissionArr = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.commission_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        commission = commissionArr.reduce((sum, val) => sum + val, 0);
+      }
+      setConvertedTotals({ revenue, commission, base });
+    }
+    convertAll();
+  }, [user, conversions]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>;
@@ -77,7 +117,9 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold">${totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
+              </p>
             </div>
           </div>
         </Card>
@@ -89,7 +131,9 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Commission</p>
-              <p className="text-2xl font-bold">${totalCommission.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {convertedTotals ? `${convertedTotals.base} ${convertedTotals.commission.toLocaleString()}` : '...'}
+              </p>
             </div>
           </div>
         </Card>
@@ -131,7 +175,7 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-green-600" />
+                      {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
                       <span className="font-semibold text-green-600">
                         {conversion.currency} {Number(conversion.revenue_amount).toLocaleString()}
                       </span>
@@ -141,7 +185,7 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
                     {conversion.commission_amount ? (
                       <div>
                         <span className="font-medium">
-                          ${Number(conversion.commission_amount).toLocaleString()}
+                          {conversion.currency} {Number(conversion.commission_amount).toLocaleString()}
                         </span>
                         {conversion.commission_rate && (
                           <p className="text-xs text-gray-600">

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +9,7 @@ import { ReportFilters } from "./ReportFilters";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { DollarSign } from "lucide-react";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 
 export const ConversionReports = () => {
   const { user, userRole } = useAuth();
@@ -20,6 +20,7 @@ export const ConversionReports = () => {
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
   });
+  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, commission: number, avgDeal: number, base: string } | null>(null);
 
   const { data: conversions, isLoading } = useQuery({
     queryKey: ['conversion-reports', user?.id, userRole, dateRange],
@@ -56,6 +57,45 @@ export const ConversionReports = () => {
     },
     enabled: !!user
   });
+
+  useEffect(() => {
+    async function convertAll() {
+      if (!user || !conversions) return;
+      const { base } = await getUserCurrencyContext(user);
+      let revenue = 0;
+      let commission = 0;
+      let avgDeal = 0;
+      if (conversions.length > 0) {
+        const revenueArr = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.revenue_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        revenue = revenueArr.reduce((sum, val) => sum + val, 0);
+        const commissionArr = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.commission_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch {
+              return amount;
+            }
+          })
+        );
+        commission = commissionArr.reduce((sum, val) => sum + val, 0);
+        avgDeal = conversions.length ? revenue / conversions.length : 0;
+      }
+      setConvertedTotals({ revenue, commission, avgDeal, base });
+    }
+    convertAll();
+  }, [user, conversions]);
 
   const exportReport = () => {
     if (!conversions || conversions.length === 0) {
@@ -113,15 +153,21 @@ export const ConversionReports = () => {
           <div className="text-sm text-gray-600">Total Conversions</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Total Revenue</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">${totalCommission.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.commission.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Total Commission</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold">${avgDealSize.toLocaleString()}</div>
+          <div className="text-2xl font-bold">
+            {convertedTotals ? `${convertedTotals.base} ${convertedTotals.avgDeal.toLocaleString()}` : '...'}
+          </div>
           <div className="text-sm text-gray-600">Avg Deal Size</div>
         </Card>
       </div>
@@ -155,7 +201,7 @@ export const ConversionReports = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-green-600" />
+                        {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
                         <span className="font-semibold text-green-600">
                           {conversion.currency} {Number(conversion.revenue_amount).toLocaleString()}
                         </span>
@@ -165,7 +211,7 @@ export const ConversionReports = () => {
                       {conversion.commission_amount ? (
                         <div>
                           <span className="font-medium">
-                            ${Number(conversion.commission_amount).toLocaleString()}
+                            {conversion.currency} {Number(conversion.commission_amount).toLocaleString()}
                           </span>
                           {conversion.commission_rate && (
                             <p className="text-xs text-gray-600">

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { SetGoalsForm } from "../forms/SetGoalsForm";
 import { LeadsDetailPage } from "../details/LeadsDetailPage";
 import { VisitsDetailPage } from "../details/VisitsDetailPage";
 import { ConversionsDetailPage } from "../details/ConversionsDetailPage";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 
 type DetailView = 'dashboard' | 'leads' | 'visits' | 'conversions';
 
@@ -31,7 +31,6 @@ export const RepDashboard = () => {
 
       const today = new Date();
       const startDate = new Date();
-      
       if (selectedPeriod === "week") {
         startDate.setDate(today.getDate() - 7);
       } else if (selectedPeriod === "month") {
@@ -47,6 +46,10 @@ export const RepDashboard = () => {
         .eq('rep_id', user.id)
         .gte('visit_date', startDate.toISOString().split('T')[0]);
 
+      console.log('visits count:', visitsCount);
+      if (visitsCount === null) {
+        throw new Error("Failed to fetch visits count");
+      }
       // Get leads count
       const { count: leadsCount } = await supabase
         .from('leads')
@@ -54,14 +57,43 @@ export const RepDashboard = () => {
         .eq('created_by', user.id)
         .gte('created_at', startDate.toISOString());
 
-      // Get conversions and revenue
+      console.log('leads count:', leadsCount);
+      if (leadsCount === null) {
+        throw new Error("Failed to fetch leads count");
+      }
+
+      // Get conversions and revenue (with currency)
       const { data: conversions } = await supabase
         .from('conversions')
-        .select('revenue_amount')
+        .select('revenue_amount, currency')
         .eq('rep_id', user.id)
         .gte('conversion_date', startDate.toISOString().split('T')[0]);
 
-      const totalRevenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
+      console.log('conversions:', conversions);
+      if (conversions === null) {
+        throw new Error("Failed to fetch conversions");
+      }
+
+      // Get user's base currency and rates
+      const { base } = await getUserCurrencyContext(user);
+
+      // Convert all revenue to user's base currency
+      let totalRevenue = 0;
+      if (conversions && conversions.length > 0) {
+        const converted = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.revenue_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch (e) {
+              console.error('Currency conversion failed:', e);
+              return amount; // fallback to original amount
+            }
+          })
+        );
+        totalRevenue = converted.reduce((sum, val) => sum + val, 0);
+      }
 
       // Get current goals
       const { data: currentGoals } = await supabase
@@ -71,12 +103,16 @@ export const RepDashboard = () => {
         .lte('period_start', today.toISOString().split('T')[0])
         .gte('period_end', today.toISOString().split('T')[0]);
 
+
+      console.log('visits:', visitsCount, 'leads:', leadsCount, 'revenue:', totalRevenue, 'base:', base, 'conversions:', conversions?.length);
+
       return {
         visits: visitsCount || 0,
         leads: leadsCount || 0,
         revenue: totalRevenue,
         conversions: conversions?.length || 0,
-        goals: currentGoals || []
+        goals: currentGoals || [],
+        baseCurrency: base
       };
     },
     enabled: !!user
@@ -97,7 +133,7 @@ export const RepDashboard = () => {
   const statCards = [
     {
       title: "Visits",
-      value: stats?.visits || 0,
+      value: stats?.visits ?? (isLoading ? '...' : 0),
       icon: Calendar,
       color: "blue",
       description: `This ${selectedPeriod}`,
@@ -105,7 +141,7 @@ export const RepDashboard = () => {
     },
     {
       title: "Leads Generated",
-      value: stats?.leads || 0,
+      value: stats?.leads ?? (isLoading ? '...' : 0),
       icon: Users,
       color: "green",
       description: `This ${selectedPeriod}`,
@@ -113,7 +149,7 @@ export const RepDashboard = () => {
     },
     {
       title: "Revenue",
-      value: `$${stats?.revenue?.toLocaleString() || 0}`,
+      value: stats?.baseCurrency ? `${stats.baseCurrency} ${stats.revenue?.toLocaleString()}` : (isLoading ? '...' : 'USD 0'),
       icon: DollarSign,
       color: "purple",
       description: `This ${selectedPeriod}`,
@@ -121,7 +157,7 @@ export const RepDashboard = () => {
     },
     {
       title: "Conversions",
-      value: stats?.conversions || 0,
+      value: stats?.conversions ?? (isLoading ? '...' : 0),
       icon: Target,
       color: "orange",
       description: `This ${selectedPeriod}`,
@@ -186,47 +222,73 @@ export const RepDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
-            key={index} 
-            className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
-            onClick={stat.onClick}
+        key={index} 
+        className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
+        onClick={stat.onClick}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+            <p className="text-3xl font-bold text-gray-900 mb-1">
+          {isLoading ? (
+            <span className="animate-pulse text-gray-400">...</span>
+          ) : (
+            stat.value
+          )}
+            </p>
+            <p className="text-xs text-gray-500">{stat.description}</p>
+          </div>
+          <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
+            <stat.icon className="h-6 w-6 text-white" />
+          </div>
+        </div>
           </Card>
         ))}
       </div>
 
       {/* Goals Progress */}
-      {stats?.goals && stats.goals.length > 0 && (
+      {isLoading ? (
         <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
           <div className="space-y-4">
-            {stats.goals.map((goal: any, index: number) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-gray-900 capitalize">{goal.goal_type}</h4>
-                  <p className="text-sm text-gray-600">{goal.description}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900">
-                    {Number(goal.current_value)} / {Number(goal.target_value)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
-                  </p>
-                </div>
-              </div>
-            ))}
+        {[1, 2].map((_, idx) => (
+          <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
+            <div>
+          <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+          <div className="h-3 w-40 bg-gray-200 rounded"></div>
+            </div>
+            <div className="text-right">
+          <div className="h-5 w-16 bg-gray-200 rounded mb-1"></div>
+          <div className="h-3 w-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        ))}
           </div>
         </Card>
+      ) : (
+        stats?.goals && stats.goals.length > 0 && (
+          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+        <div className="space-y-4">
+          {stats.goals.map((goal: any, index: number) => (
+            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h4 className="font-semibold text-gray-900 capitalize">{goal.goal_type}</h4>
+            <p className="text-sm text-gray-600">{goal.description}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold text-gray-900">
+              {Number(goal.current_value)} / {Number(goal.target_value)}
+            </p>
+            <p className="text-sm text-gray-600">
+              {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
+            </p>
+          </div>
+            </div>
+          ))}
+        </div>
+          </Card>
+        )
       )}
 
       {/* Forms */}
