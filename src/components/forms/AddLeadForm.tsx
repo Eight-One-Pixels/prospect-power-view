@@ -35,7 +35,8 @@ const currencies = [
   { code: 'TND', name: 'Tunisian Dinar', symbol: 'TND' },
   { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
   { code: 'SAR', name: 'Saudi Riyal', symbol: 'SR' },
-  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QR' }
+  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QR' },
+  { code: 'MWK', name: 'Malawi Kwacha', symbol: 'MK' }
 ];
 
 export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {

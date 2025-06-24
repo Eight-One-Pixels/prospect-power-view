@@ -1,3 +1,5 @@
+
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +8,88 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const currencies = [
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+  { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+  { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
+  { code: 'GHS', name: 'Ghanaian Cedi', symbol: '₵' },
+  { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£' },
+  { code: 'MAD', name: 'Moroccan Dirham', symbol: 'MAD' },
+  { code: 'TND', name: 'Tunisian Dinar', symbol: 'TND' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SR' },
+  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QR' },
+  { code: 'MWK', name: 'Malawi Kwacha', symbol: 'MK' }
+];
 
 const Settings = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [preferredCurrency, setPreferredCurrency] = useState('USD');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadUserPreferences();
+    }
+  }, [user]);
+
+  const loadUserPreferences = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('preferred_currency')
+        .eq('id', user?.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // Ignore "not found" errors
+        throw error;
+      }
+
+      if (data?.preferred_currency) {
+        setPreferredCurrency(data.preferred_currency);
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
+
+  const savePreferredCurrency = async (currency: string) => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          preferred_currency: currency
+        });
+
+      if (error) throw error;
+
+      setPreferredCurrency(currency);
+      toast.success("Currency preference saved!");
+    } catch (error) {
+      console.error('Error saving currency preference:', error);
+      toast.error("Failed to save currency preference");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -35,6 +115,37 @@ const Settings = () => {
         </div>
 
         <div className="max-w-2xl mx-auto space-y-6">
+          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-lg">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Currency Preferences</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="preferredCurrency">Preferred Currency</Label>
+                <p className="text-sm text-gray-500 mb-2">
+                  Set your preferred currency for viewing amounts. All amounts will be converted from their original currency to your preferred currency using current exchange rates.
+                </p>
+                <Select 
+                  value={preferredCurrency} 
+                  onValueChange={savePreferredCurrency}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select preferred currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-lg max-h-60">
+                    {currencies.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.symbol} {curr.code} - {curr.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {loading && (
+                  <p className="text-sm text-gray-500">Saving...</p>
+                )}
+              </div>
+            </div>
+          </Card>
+
           <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-lg">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Notifications</h3>
             <div className="space-y-4">
