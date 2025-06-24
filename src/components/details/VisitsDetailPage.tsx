@@ -348,7 +348,7 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
               <Checkbox
                 id="editLeadGenerated"
                 checked={editLeadGenerated}
-                onCheckedChange={setEditLeadGenerated}
+                onCheckedChange={checked => setEditLeadGenerated(checked === true)}
               />
               <Label htmlFor="editLeadGenerated">Lead generated from this visit</Label>
             </div>
@@ -358,7 +358,7 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
                 <Checkbox
                   id="editFollowUpRequired"
                   checked={editFollowUpRequired}
-                  onCheckedChange={setEditFollowUpRequired}
+                  onCheckedChange={checked => setEditFollowUpRequired(checked === true)}
                 />
                 <Label htmlFor="editFollowUpRequired">Follow-up required</Label>
               </div>
