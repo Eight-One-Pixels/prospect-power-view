@@ -15,6 +15,7 @@ export type Database = {
           commission_rate: number | null
           conversion_date: string
           created_at: string | null
+          currency: string | null
           id: string
           lead_id: string
           notes: string | null
@@ -26,6 +27,7 @@ export type Database = {
           commission_rate?: number | null
           conversion_date?: string
           created_at?: string | null
+          currency?: string | null
           id?: string
           lead_id: string
           notes?: string | null
@@ -37,6 +39,7 @@ export type Database = {
           commission_rate?: number | null
           conversion_date?: string
           created_at?: string | null
+          currency?: string | null
           id?: string
           lead_id?: string
           notes?: string | null
@@ -160,7 +163,8 @@ export type Database = {
           contact_phone: string
           created_at: string | null
           created_by: string
-          estimated_value: number | null
+          currency: string | null
+          estimated_revenue: number | null
           id: string
           industry: string | null
           next_follow_up: string | null
@@ -177,7 +181,8 @@ export type Database = {
           contact_phone: string
           created_at?: string | null
           created_by: string
-          estimated_value?: number | null
+          currency?: string | null
+          estimated_revenue?: number | null
           id?: string
           industry?: string | null
           next_follow_up?: string | null
@@ -194,7 +199,8 @@ export type Database = {
           contact_phone?: string
           created_at?: string | null
           created_by?: string
-          estimated_value?: number | null
+          currency?: string | null
+          estimated_revenue?: number | null
           id?: string
           industry?: string | null
           next_follow_up?: string | null

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { AddLeadForm } from "@/components/forms/AddLeadForm";
 import { LogVisitForm } from "../forms/LogVisitForm";
 import { SetGoalsForm } from "../forms/SetGoalsForm";
+import { LeadsDetailPage } from "../details/LeadsDetailPage";
+import { VisitsDetailPage } from "../details/VisitsDetailPage";
+import { ConversionsDetailPage } from "../details/ConversionsDetailPage";
 
+type DetailView = 'dashboard' | 'leads' | 'visits' | 'conversions';
 
 export const RepDashboard = () => {
   const { user } = useAuth();
@@ -16,6 +21,7 @@ export const RepDashboard = () => {
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [logVisitOpen, setLogVisitOpen] = useState(false);
   const [setGoalsOpen, setSetGoalsOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<DetailView>('dashboard');
 
   // Fetch user's stats
   const { data: stats, isLoading, refetch } = useQuery({
@@ -76,34 +82,50 @@ export const RepDashboard = () => {
     enabled: !!user
   });
 
+  if (currentView === 'leads') {
+    return <LeadsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
+
+  if (currentView === 'visits') {
+    return <VisitsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
+
+  if (currentView === 'conversions') {
+    return <ConversionsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
+
   const statCards = [
     {
       title: "Visits",
       value: stats?.visits || 0,
       icon: Calendar,
       color: "blue",
-      description: `This ${selectedPeriod}`
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('visits')
     },
     {
       title: "Leads Generated",
       value: stats?.leads || 0,
       icon: Users,
       color: "green",
-      description: `This ${selectedPeriod}`
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('leads')
     },
     {
       title: "Revenue",
       value: `$${stats?.revenue?.toLocaleString() || 0}`,
       icon: DollarSign,
       color: "purple",
-      description: `This ${selectedPeriod}`
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('conversions')
     },
     {
       title: "Conversions",
       value: stats?.conversions || 0,
       icon: Target,
       color: "orange",
-      description: `This ${selectedPeriod}`
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('conversions')
     }
   ];
 
@@ -163,7 +185,11 @@ export const RepDashboard = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm">
+          <Card 
+            key={index} 
+            className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
+            onClick={stat.onClick}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
@@ -202,6 +228,8 @@ export const RepDashboard = () => {
           </div>
         </Card>
       )}
+
+      {/* Forms */}
       <LogVisitForm open={logVisitOpen} onOpenChange={(open) => {
         setLogVisitOpen(open);
         if (!open) refetch();
