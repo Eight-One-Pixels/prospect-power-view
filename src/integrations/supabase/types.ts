@@ -224,6 +224,7 @@ export type Database = {
           manager_id: string | null
           phone: string | null
           position: string | null
+          preferred_currency: string | null
           role_id: string | null
           sys_role: string | null
         }
@@ -239,6 +240,7 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           position?: string | null
+          preferred_currency?: string | null
           role_id?: string | null
           sys_role?: string | null
         }
@@ -254,6 +256,7 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           position?: string | null
+          preferred_currency?: string | null
           role_id?: string | null
           sys_role?: string | null
         }
