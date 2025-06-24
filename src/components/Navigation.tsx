@@ -1,134 +1,118 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/useAuth";
-import { 
-  Home, 
-  User, 
-  Settings, 
-  LogOut, 
-  ChevronDown,
-  Users,
-  Shield
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import icon from '@/assets/icon.png';
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { BarChart3, Users, Settings, LogOut, User, Home, FileText } from "lucide-react";
 
 export const Navigation = () => {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Get user profile for avatar
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id
-  });
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+      toast.success("Signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const isAdmin = userRole === 'admin';
+  const isActive = (path: string) => location.pathname === path;
+  const isManager = userRole && ['manager', 'director', 'admin'].includes(userRole);
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-              {/* <span className="text-white font-bold text-sm">AS</span> */}
-              <img src={icon} alt="Alo-Sales" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Alo-Sales
-            </span>
-          </Link>
+            </Link>
+            
+            <div className="hidden md:flex items-center space-x-6">
+              <Link
+                to="/"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive("/") 
+                    ? "bg-indigo-100 text-indigo-700" 
+                    : "text-gray-600 hover:text-indigo-600 hover:bg-gray-100"
+                }`}
+              >
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Link>
+              
+              <Link
+                to="/reports"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  isActive("/reports") 
+                    ? "bg-indigo-100 text-indigo-700" 
+                    : "text-gray-600 hover:text-indigo-600 hover:bg-gray-100"
+                }`}
+              >
+                <FileText className="h-4 w-4" />
+                Reports
+              </Link>
+
+              {isManager && (
+                <Link
+                  to="/manage-users"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isActive("/manage-users") 
+                      ? "bg-indigo-100 text-indigo-700" 
+                      : "text-gray-600 hover:text-indigo-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
+                  Manage Users
+                </Link>
+              )}
+            </div>
+          </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link to="/" className="flex items-center space-x-2">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-            </Button>
-
-            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            {userRole && (
+              <Badge variant="outline" className="hidden sm:inline-flex">
+                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+              </Badge>
+            )}
+            
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 px-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || ''} />
-                    <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold">
-                      {profile?.full_name 
-                        ? getInitials(profile.full_name)
-                        : user?.email ? getInitials(user.email) : 'U'
-                      }
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                    <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                      {user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline text-sm font-medium">
-                    {profile?.full_name || user?.email}
-                  </span>
-                  <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center space-x-2 cursor-pointer">
+                  <Link to="/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    <span>Profile</span>
+                    Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center space-x-2 cursor-pointer">
+                  <Link to="/settings" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    <span>Settings</span>
+                    Settings
                   </Link>
                 </DropdownMenuItem>
-                {isAdmin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/manage-users" className="flex items-center space-x-2 cursor-pointer">
-                        <Shield className="h-4 w-4" />
-                        <Users className="h-4 w-4" />
-                        <span>Manage Users</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
                   <LogOut className="h-4 w-4 mr-2" />
-                  <span>Sign Out</span>
+                  Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -1,0 +1,227 @@
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ReportFilters } from "./ReportFilters";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+export const LeadReports = () => {
+  const { user, userRole } = useAuth();
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    to: new Date()
+  });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ['lead-reports', user?.id, userRole, dateRange, statusFilter, sourceFilter],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      let query = supabase
+        .from('leads')
+        .select('*');
+
+      // Filter by user if not manager/admin
+      if (!['manager', 'director', 'admin'].includes(userRole || '')) {
+        query = query.eq('created_by', user.id);
+      }
+
+      // Apply date filter
+      if (dateRange.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        query = query.lte('created_at', dateRange.to.toISOString());
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply source filter
+      if (sourceFilter !== 'all') {
+        query = query.eq('source', sourceFilter);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  const exportReport = () => {
+    if (!leads || leads.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const csvContent = [
+      ['Date', 'Company', 'Contact', 'Source', 'Status', 'Est. Revenue', 'Currency'].join(','),
+      ...leads.map(lead => [
+        format(new Date(lead.created_at), 'yyyy-MM-dd'),
+        `"${lead.company_name}"`,
+        `"${lead.contact_name}"`,
+        lead.source,
+        lead.status,
+        lead.estimated_revenue || 0,
+        lead.currency || 'USD'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lead-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Report exported successfully!");
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      new: "bg-blue-100 text-blue-800",
+      contacted: "bg-yellow-100 text-yellow-800",
+      qualified: "bg-purple-100 text-purple-800",
+      proposal: "bg-orange-100 text-orange-800",
+      negotiation: "bg-indigo-100 text-indigo-800",
+      closed_won: "bg-green-100 text-green-800",
+      closed_lost: "bg-red-100 text-red-800"
+    };
+    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+  };
+
+  const totalEstimatedRevenue = leads?.reduce((sum, lead) => 
+    sum + (Number(lead.estimated_revenue) || 0), 0
+  ) || 0;
+
+  const leadsByStatus = leads?.reduce((acc, lead) => {
+    acc[lead.status || 'unknown'] = (acc[lead.status || 'unknown'] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  return (
+    <div className="space-y-6">
+      <ReportFilters
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        onExport={exportReport}
+        exportLabel="Export Lead Report"
+        additionalFilters={
+          <>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
+                <SelectItem value="qualified">Qualified</SelectItem>
+                <SelectItem value="proposal">Proposal</SelectItem>
+                <SelectItem value="negotiation">Negotiation</SelectItem>
+                <SelectItem value="closed_won">Closed Won</SelectItem>
+                <SelectItem value="closed_lost">Closed Lost</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="website">Website</SelectItem>
+                <SelectItem value="social">Social Media</SelectItem>
+                <SelectItem value="email">Email Campaign</SelectItem>
+                <SelectItem value="referral">Referral</SelectItem>
+                <SelectItem value="cold-call">Cold Call</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        }
+      />
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="text-2xl font-bold">{leads?.length || 0}</div>
+          <div className="text-sm text-gray-600">Total Leads</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-bold">${totalEstimatedRevenue.toLocaleString()}</div>
+          <div className="text-sm text-gray-600">Est. Pipeline Value</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-bold">{leadsByStatus['closed_won'] || 0}</div>
+          <div className="text-sm text-gray-600">Closed Won</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-2xl font-bold">
+            {leads?.length ? Math.round(((leadsByStatus['closed_won'] || 0) / leads.length) * 100) : 0}%
+          </div>
+          <div className="text-sm text-gray-600">Conversion Rate</div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Lead Details</h3>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">Loading...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Est. Revenue</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leads?.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell>{format(new Date(lead.created_at), 'MMM dd, yyyy')}</TableCell>
+                    <TableCell className="font-medium">{lead.company_name}</TableCell>
+                    <TableCell>{lead.contact_name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{lead.source}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(lead.status || '')}>
+                        {lead.status?.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {lead.estimated_revenue ? (
+                        <span>{lead.currency} {Number(lead.estimated_revenue).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
