@@ -11,6 +11,8 @@ import { ReportFilters } from "./ReportFilters";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+type LeadStatus = "all" | "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
+
 export const LeadReports = () => {
   const { user, userRole } = useAuth();
   const [dateRange, setDateRange] = useState<{
@@ -20,7 +22,7 @@ export const LeadReports = () => {
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
   });
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<LeadStatus>("all");
   const [sourceFilter, setSourceFilter] = useState("all");
 
   const { data: leads, isLoading } = useQuery({
@@ -122,7 +124,7 @@ export const LeadReports = () => {
         exportLabel="Export Lead Report"
         additionalFilters={
           <>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as LeadStatus)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
