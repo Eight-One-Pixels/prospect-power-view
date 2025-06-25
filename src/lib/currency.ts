@@ -289,7 +289,7 @@ export async function fetchExchangeRates(base: string): Promise<CurrencyRates> {
 
 
 /**
- * Converts a given amount from one currency to another, with 60-day in-memory cache.
+ * Converts a given amount from one currency to another, with 60-day in-memory cache and fallback using fallback rates.
  */
 export async function convertCurrency(
   amount: number,
@@ -303,27 +303,46 @@ export async function convertCurrency(
     return cached.result;
   }
 
-  const url = new URL(CONVERT_API_URL);
-  url.searchParams.set("amount", amount.toString());
-  url.searchParams.set("from", from);
-  url.searchParams.set("to", to);
+  try {
+    const url = new URL(CONVERT_API_URL);
+    url.searchParams.set("amount", amount.toString());
+    url.searchParams.set("from", from);
+    url.searchParams.set("to", to);
 
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    throw new Error(`Conversion failed: ${res.statusText}`);
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      throw new Error(`Conversion failed: ${res.statusText}`);
+    }
+
+    const json = await res.json();
+    console.log("DEBUG convertCurrency response:", json);
+
+    if (typeof json.result !== "number") {
+      throw new Error(`Conversion rate API returned an unexpected result.`);
+    }
+
+    // Cache the result
+    conversionCache[cacheKey] = { result: json.result, timestamp: now };
+    return json.result;
+  } catch (err) {
+    // Fallback: use fallback rates to calculate conversion
+    console.warn(`Falling back to hardcoded conversion for ${amount} ${from} to ${to}:`, err);
+    const rates = FALLBACK_EXCHANGE_RATES["USD"];
+    if (!rates) throw new Error("No fallback rates available for conversion.");
+    let fromRate = rates[from];
+    let toRate = rates[to];
+    if (from === "USD") fromRate = 1;
+    if (to === "USD") toRate = 1;
+    if (!fromRate || !toRate) {
+      throw new Error(`Fallback conversion not possible: missing rate for ${from} or ${to}`);
+    }
+    // Convert: amount in 'from' to USD, then to 'to'
+    const usdAmount = amount / fromRate;
+    const result = usdAmount * toRate;
+    // Cache the result
+    conversionCache[cacheKey] = { result, timestamp: now };
+    return result;
   }
-
-  const json = await res.json();
-  console.log("DEBUG convertCurrency response:", json);
-
-  if (typeof json.result !== "number") {
-    throw new Error(`Conversion rate API returned an unexpected result.`);
-  }
-
-  // Cache the result
-  conversionCache[cacheKey] = { result: json.result, timestamp: now };
-
-  return json.result;
 }
 
 
