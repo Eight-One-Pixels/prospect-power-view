@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +35,7 @@ export const LeadReports = () => {
         .from('leads')
         .select(`
           *,
-          creator:profiles!leads_created_by_fkey (full_name, email)
+          profiles!inner(full_name, email)
         `);
 
       // Filter by user if not manager/admin
@@ -109,7 +108,7 @@ export const LeadReports = () => {
         lead.status,
         lead.estimated_revenue || 0,
         lead.currency || 'USD',
-        `"${lead.creator?.full_name || lead.creator?.email || 'Unknown'}"`
+        `"${lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}"`
       ].join(','))
     ].join('\n');
 
@@ -248,7 +247,7 @@ export const LeadReports = () => {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
-                        {lead.creator?.full_name || lead.creator?.email || 'Unknown'}
+                        {lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}
                       </span>
                     </TableCell>
                   </TableRow>

@@ -6,10 +6,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
+  requiredRoles?: string[];
 }
 
-const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: ProtectedRouteProps) => {
+  const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,9 +19,14 @@ const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) =
         navigate("/auth");
       } else if (!requireAuth && user) {
         navigate("/");
+      } else if (user && requiredRoles && requiredRoles.length > 0) {
+        // Check if user has required role
+        if (!userRole || !requiredRoles.includes(userRole)) {
+          navigate("/"); // Redirect to main dashboard if no permission
+        }
       }
     }
-  }, [user, loading, navigate, requireAuth]);
+  }, [user, userRole, loading, navigate, requireAuth, requiredRoles]);
 
   if (loading) {
     return (
@@ -36,6 +42,12 @@ const ProtectedRoute = ({ children, requireAuth = true }: ProtectedRouteProps) =
 
   if (!requireAuth && user) {
     return null;
+  }
+
+  if (user && requiredRoles && requiredRoles.length > 0) {
+    if (!userRole || !requiredRoles.includes(userRole)) {
+      return null;
+    }
   }
 
   return <>{children}</>;

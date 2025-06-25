@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -95,8 +94,13 @@ export const AdminDashboard = () => {
       const { data: recentLeads } = await supabase
         .from('leads')
         .select(`
-          *,
-          creator:profiles!leads_created_by_fkey (full_name, email)
+          id,
+          company_name,
+          contact_name,
+          status,
+          created_at,
+          created_by,
+          profiles!inner(full_name, email)
         `)
         .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
@@ -106,9 +110,14 @@ export const AdminDashboard = () => {
       const { data: recentConversions } = await supabase
         .from('conversions')
         .select(`
-          *,
-          leads (company_name, contact_name),
-          rep:profiles!conversions_rep_id_fkey (full_name, email)
+          id,
+          conversion_date,
+          revenue_amount,
+          currency,
+          rep_id,
+          lead_id,
+          leads!inner(company_name, contact_name),
+          profiles!inner(full_name, email)
         `)
         .gte('conversion_date', sevenDaysAgo.toISOString().split('T')[0])
         .order('conversion_date', { ascending: false })
@@ -233,7 +242,7 @@ export const AdminDashboard = () => {
                   <h4 className="font-semibold text-gray-900">{lead.company_name}</h4>
                   <p className="text-sm text-gray-600">{lead.contact_name}</p>
                   <p className="text-xs text-gray-500">
-                    by {lead.creator?.full_name || lead.creator?.email || 'Unknown'}
+                    by {lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}
                   </p>
                 </div>
                 <Badge variant="outline" className="capitalize">
@@ -253,7 +262,7 @@ export const AdminDashboard = () => {
                   <h4 className="font-semibold text-gray-900">{conversion.leads?.company_name}</h4>
                   <p className="text-sm text-gray-600">{conversion.leads?.contact_name}</p>
                   <p className="text-xs text-gray-500">
-                    by {conversion.rep?.full_name || conversion.rep?.email || 'Unknown'}
+                    by {conversion.profiles?.full_name || conversion.profiles?.email || 'Unknown'}
                   </p>
                 </div>
                 <div className="text-right">
