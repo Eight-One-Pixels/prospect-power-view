@@ -100,7 +100,7 @@ export const AdminDashboard = () => {
           status,
           created_at,
           created_by,
-          profiles!inner(full_name, email)
+          profiles:created_by(full_name, email)
         `)
         .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
@@ -117,7 +117,7 @@ export const AdminDashboard = () => {
           rep_id,
           lead_id,
           leads!inner(company_name, contact_name),
-          profiles!inner(full_name, email)
+          profiles:rep_id(full_name, email)
         `)
         .gte('conversion_date', sevenDaysAgo.toISOString().split('T')[0])
         .order('conversion_date', { ascending: false })

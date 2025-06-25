@@ -54,6 +54,13 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conversions_rep_id_fkey"
+            columns: ["rep_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
         ]
       }
       daily_visits: {
@@ -218,7 +225,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["lead_status"] | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -290,7 +305,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_with_roles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       user_roles: {
