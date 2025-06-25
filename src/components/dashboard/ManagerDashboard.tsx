@@ -307,7 +307,7 @@ export const ManagerDashboard = () => {
         if (!open) refetch();
       }} />
       <AddLeadForm open={addLeadOpen} onOpenChange={(open) => {
-        setAddLeadForm(open);
+        setAddLeadOpen(open);
         if (!open) refetch();
       }} />
       <SetGoalsForm open={setGoalsOpen} onOpenChange={(open) => {

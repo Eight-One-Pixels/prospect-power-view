@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 interface AddLeadFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLeadCreated?: () => void;
 }
 
 const currencies = [
@@ -39,7 +39,7 @@ const currencies = [
   { code: 'MWK', name: 'Malawi Kwacha', symbol: 'MK' }
 ];
 
-export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
+export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormProps) => {
   const { user } = useAuth();
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
@@ -100,6 +100,7 @@ export const AddLeadForm = ({ open, onOpenChange }: AddLeadFormProps) => {
 
       toast.success("Lead added successfully!");
       onOpenChange(false);
+      if (onLeadCreated) onLeadCreated();
       // Reset form
       setCompanyName("");
       setContactName("");
