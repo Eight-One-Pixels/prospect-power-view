@@ -36,7 +36,7 @@ export const RevenueReports = () => {
             contact_name,
             source
           ),
-          profiles:rep_id (full_name, email)
+          rep:profiles!conversions_rep_id_fkey (full_name, email)
         `);
 
       // Filter by user if not manager/admin
@@ -201,7 +201,7 @@ export const RevenueReports = () => {
         conv.revenue_amount,
         conv.commission_amount || 0,
         conv.currency || 'USD',
-        conv.profiles?.full_name || conv.profiles?.email || 'Unknown'
+        conv.rep?.full_name || conv.rep?.email || 'Unknown'
       ]),
       [''],
       ['Currency Breakdown'],

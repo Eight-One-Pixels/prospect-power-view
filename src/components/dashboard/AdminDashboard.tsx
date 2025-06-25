@@ -91,24 +91,24 @@ export const AdminDashboard = () => {
       const today = new Date();
       const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
 
-      // Get recent leads
+      // Get recent leads with creator info
       const { data: recentLeads } = await supabase
         .from('leads')
         .select(`
           *,
-          profiles:created_by (full_name, email)
+          creator:profiles!leads_created_by_fkey (full_name, email)
         `)
         .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Get recent conversions
+      // Get recent conversions with rep info
       const { data: recentConversions } = await supabase
         .from('conversions')
         .select(`
           *,
           leads (company_name, contact_name),
-          profiles:rep_id (full_name, email)
+          rep:profiles!conversions_rep_id_fkey (full_name, email)
         `)
         .gte('conversion_date', sevenDaysAgo.toISOString().split('T')[0])
         .order('conversion_date', { ascending: false })
@@ -233,7 +233,7 @@ export const AdminDashboard = () => {
                   <h4 className="font-semibold text-gray-900">{lead.company_name}</h4>
                   <p className="text-sm text-gray-600">{lead.contact_name}</p>
                   <p className="text-xs text-gray-500">
-                    by {lead.profiles?.full_name || lead.profiles?.email}
+                    by {lead.creator?.full_name || lead.creator?.email || 'Unknown'}
                   </p>
                 </div>
                 <Badge variant="outline" className="capitalize">
@@ -253,7 +253,7 @@ export const AdminDashboard = () => {
                   <h4 className="font-semibold text-gray-900">{conversion.leads?.company_name}</h4>
                   <p className="text-sm text-gray-600">{conversion.leads?.contact_name}</p>
                   <p className="text-xs text-gray-500">
-                    by {conversion.profiles?.full_name || conversion.profiles?.email}
+                    by {conversion.rep?.full_name || conversion.rep?.email || 'Unknown'}
                   </p>
                 </div>
                 <div className="text-right">

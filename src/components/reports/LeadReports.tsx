@@ -36,7 +36,7 @@ export const LeadReports = () => {
         .from('leads')
         .select(`
           *,
-          profiles:created_by (full_name, email)
+          creator:profiles!leads_created_by_fkey (full_name, email)
         `);
 
       // Filter by user if not manager/admin
@@ -109,7 +109,7 @@ export const LeadReports = () => {
         lead.status,
         lead.estimated_revenue || 0,
         lead.currency || 'USD',
-        `"${lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}"`
+        `"${lead.creator?.full_name || lead.creator?.email || 'Unknown'}"`
       ].join(','))
     ].join('\n');
 
@@ -248,7 +248,7 @@ export const LeadReports = () => {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
-                        {lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}
+                        {lead.creator?.full_name || lead.creator?.email || 'Unknown'}
                       </span>
                     </TableCell>
                   </TableRow>
