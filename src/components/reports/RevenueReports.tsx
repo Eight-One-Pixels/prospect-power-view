@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 import { useQuery } from "@tanstack/react-query";
@@ -34,7 +35,8 @@ export const RevenueReports = () => {
             company_name,
             contact_name,
             source
-          )
+          ),
+          profiles:rep_id (full_name, email)
         `);
 
       // Filter by user if not manager/admin
@@ -142,17 +144,6 @@ export const RevenueReports = () => {
     convertAll();
   }, [user, revenueData]);
 
-  const totalRevenue = revenueData?.conversions?.reduce((sum, conv) => 
-    sum + Number(conv.revenue_amount), 0
-  ) || 0;
-
-  const totalCommission = revenueData?.conversions?.reduce((sum, conv) => 
-    sum + (Number(conv.commission_amount) || 0), 0
-  ) || 0;
-
-  const avgCommissionRate = revenueData?.conversions?.length ? 
-    (totalCommission / totalRevenue * 100) : 0;
-
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   const [convertedExportRows, setConvertedExportRows] = useState<any[] | null>(null);
@@ -200,6 +191,17 @@ export const RevenueReports = () => {
         item.revenue,
         item.commission,
         item.conversions
+      ]),
+      [''],
+      ['Individual Conversions'],
+      ['Date', 'Company', 'Revenue', 'Commission', 'Currency', 'Sales Rep'],
+      ...revenueData.conversions.map(conv => [
+        format(new Date(conv.conversion_date), 'yyyy-MM-dd'),
+        conv.leads?.company_name || 'Unknown',
+        conv.revenue_amount,
+        conv.commission_amount || 0,
+        conv.currency || 'USD',
+        conv.profiles?.full_name || conv.profiles?.email || 'Unknown'
       ]),
       [''],
       ['Currency Breakdown'],

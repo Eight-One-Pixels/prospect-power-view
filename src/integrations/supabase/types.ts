@@ -59,8 +59,8 @@ export type Database = {
       daily_visits: {
         Row: {
           company_name: string
+          contact_email: string | null
           contact_person: string | null
-          contact_email: string | null // Added contact_email column
           created_at: string | null
           duration_minutes: number | null
           follow_up_date: string | null
@@ -71,15 +71,15 @@ export type Database = {
           notes: string | null
           outcome: string | null
           rep_id: string
-          status: string | null // status column
+          status: string | null
           visit_date: string
-          visit_time: string | null // visit_time column
+          visit_time: string | null
           visit_type: Database["public"]["Enums"]["visit_type"]
         }
         Insert: {
           company_name: string
+          contact_email?: string | null
           contact_person?: string | null
-          contact_email?: string | null // Added contact_email column
           created_at?: string | null
           duration_minutes?: number | null
           follow_up_date?: string | null
@@ -90,15 +90,15 @@ export type Database = {
           notes?: string | null
           outcome?: string | null
           rep_id: string
-          status?: string | null // status column
+          status?: string | null
           visit_date?: string
-          visit_time?: string | null // visit_time column
+          visit_time?: string | null
           visit_type: Database["public"]["Enums"]["visit_type"]
         }
         Update: {
           company_name?: string
+          contact_email?: string | null
           contact_person?: string | null
-          contact_email?: string | null // Added contact_email column
           created_at?: string | null
           duration_minutes?: number | null
           follow_up_date?: string | null
@@ -109,9 +109,9 @@ export type Database = {
           notes?: string | null
           outcome?: string | null
           rep_id?: string
-          status?: string | null // status column
+          status?: string | null
           visit_date?: string
-          visit_time?: string | null // visit_time column
+          visit_time?: string | null
           visit_type?: Database["public"]["Enums"]["visit_type"]
         }
         Relationships: [
@@ -233,7 +233,7 @@ export type Database = {
           manager_id: string | null
           phone: string | null
           position: string | null
-          preferred_currency: string | null // Updated to include preferred_currency
+          preferred_currency: string | null
           role_id: string | null
           sys_role: string | null
         }
@@ -249,7 +249,7 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           position?: string | null
-          preferred_currency?: string | null // Updated to include preferred_currency
+          preferred_currency?: string | null
           role_id?: string | null
           sys_role?: string | null
         }
@@ -408,7 +408,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

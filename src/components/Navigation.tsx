@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,9 @@ import {
   Settings, 
   Users, 
   LogOut,
-  User
+  User,
+  Shield,
+  UserCog
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +59,9 @@ export const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
   
-  const canManageUsers = ['manager', 'director', 'admin'].includes(userRole || '');
+  const canManageUsers = ['admin', 'director'].includes(userRole || '');
+  const isManager = userRole === 'manager';
+  const isAdminOrDirector = ['admin', 'director'].includes(userRole || '');
 
   return (
     <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40">
@@ -83,6 +88,20 @@ export const Navigation = () => {
                 Dashboard
               </Link>
               
+              {isManager && (
+                <Link
+                  to="/manage-team"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/manage-team') 
+                      ? 'bg-indigo-100 text-indigo-700' 
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <UserCog className="h-4 w-4" />
+                  Manage Team
+                </Link>
+              )}
+              
               <Link
                 to="/reports"
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -95,17 +114,17 @@ export const Navigation = () => {
                 Reports
               </Link>
               
-              {canManageUsers && (
+              {isAdminOrDirector && (
                 <Link
-                  to="/manage-users"
+                  to="/admin"
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/manage-users') 
+                    isActive('/admin') 
                       ? 'bg-indigo-100 text-indigo-700' 
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
-                  <Users className="h-4 w-4" />
-                  Manage Users
+                  <Shield className="h-4 w-4" />
+                  Admin
                 </Link>
               )}
             </div>

@@ -1,137 +1,150 @@
 
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Target, Users, DollarSign, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Users, TrendingUp, Target, DollarSign } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { AddLeadForm } from "@/components/forms/AddLeadForm";
+import { LogVisitForm } from "../forms/LogVisitForm";
+import { SetGoalsForm } from "../forms/SetGoalsForm";
+import { LeadsDetailPage } from "../details/LeadsDetailPage";
+import { VisitsDetailPage } from "../details/VisitsDetailPage";
+import { ConversionsDetailPage } from "../details/ConversionsDetailPage";
+import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
+
+type DetailView = 'dashboard' | 'leads' | 'visits' | 'conversions';
 
 export const ManagerDashboard = () => {
-  // Fetch team overview stats
-  const { data: teamStats, isLoading } = useQuery({
-    queryKey: ['team-stats'],
-    queryFn: async () => {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      // Get all team members with their roles
-      const { data: teamMembers } = await supabase
-        .from('profiles_with_roles')
-        .select('*');
+  const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
+  const [logVisitOpen, setLogVisitOpen] = useState(false);
+  const [setGoalsOpen, setSetGoalsOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<DetailView>('dashboard');
+  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, base: string } | null>(null);
 
-      // Get total visits this month
-      const { count: totalVisits } = await supabase
+  // Fetch user's stats (personal stats for the manager)
+  const { data: stats, isLoading, refetch } = useQuery({
+    queryKey: ['manager-personal-stats', user?.id, selectedPeriod],
+    queryFn: async () => {
+      if (!user) return null;
+
+      const today = new Date();
+      const startDate = new Date();
+      if (selectedPeriod === "week") {
+        startDate.setDate(today.getDate() - 7);
+      } else if (selectedPeriod === "month") {
+        startDate.setMonth(today.getMonth() - 1);
+      } else {
+        startDate.setDate(today.getDate() - 1);
+      }
+
+      // Get visits count for the manager
+      const { count: visitsCount } = await supabase
         .from('daily_visits')
         .select('*', { count: 'exact', head: true })
-        .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
+        .eq('rep_id', user.id)
+        .gte('visit_date', startDate.toISOString().split('T')[0]);
 
-      // Get total leads this month
-      const { count: totalLeads } = await supabase
+      // Get leads count for the manager
+      const { count: leadsCount } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', startOfMonth.toISOString());
+        .eq('created_by', user.id)
+        .gte('created_at', startDate.toISOString());
 
-      // Get total conversions and revenue this month
+      // Get conversions and revenue for the manager
       const { data: conversions } = await supabase
         .from('conversions')
-        .select('revenue_amount')
-        .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
+        .select('revenue_amount, currency')
+        .eq('rep_id', user.id)
+        .gte('conversion_date', startDate.toISOString().split('T')[0]);
 
-      const totalRevenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
+      // Get user's base currency and convert revenue
+      const { base } = await getUserCurrencyContext(user);
+      let totalRevenue = 0;
+      if (conversions && conversions.length > 0) {
+        const converted = await Promise.all(
+          conversions.map(async (conv) => {
+            const amount = Number(conv.revenue_amount) || 0;
+            const fromCurrency = conv.currency || 'USD';
+            try {
+              return await convertCurrency(amount, fromCurrency, base);
+            } catch (e) {
+              console.error('Currency conversion failed:', e);
+              return amount;
+            }
+          })
+        );
+        totalRevenue = converted.reduce((sum, val) => sum + val, 0);
+      }
+
+      // Get current goals
+      const { data: currentGoals } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .lte('period_start', today.toISOString().split('T')[0])
+        .gte('period_end', today.toISOString().split('T')[0]);
 
       return {
-        teamSize: teamMembers?.length || 0,
-        totalVisits: totalVisits || 0,
-        totalLeads: totalLeads || 0,
-        totalRevenue,
-        totalConversions: conversions?.length || 0,
-        teamMembers: teamMembers || []
+        visits: visitsCount || 0,
+        leads: leadsCount || 0,
+        revenue: totalRevenue,
+        conversions: conversions?.length || 0,
+        goals: currentGoals || [],
+        baseCurrency: base
       };
-    }
+    },
+    enabled: !!user
   });
 
-  // Fetch individual rep performance
-  const { data: repPerformance, isLoading: isLoadingPerformance } = useQuery({
-    queryKey: ['rep-performance'],
-    queryFn: async () => {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  if (currentView === 'leads') {
+    return <LeadsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
 
-      // Get all reps with their performance data
-      const { data: reps } = await supabase
-        .from('profiles_with_roles')
-        .select('*')
-        .in('role', ['rep', 'manager']);
+  if (currentView === 'visits') {
+    return <VisitsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
 
-      if (!reps) return [];
-
-      const repData = await Promise.all(
-        reps.map(async (rep) => {
-          // Get visits for this rep this month
-          const { count: visits } = await supabase
-            .from('daily_visits')
-            .select('*', { count: 'exact', head: true })
-            .eq('rep_id', rep.id)
-            .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
-
-          // Get leads for this rep this month
-          const { count: leads } = await supabase
-            .from('leads')
-            .select('*', { count: 'exact', head: true })
-            .eq('created_by', rep.id)
-            .gte('created_at', startOfMonth.toISOString());
-
-          // Get conversions and revenue for this rep this month
-          const { data: conversions } = await supabase
-            .from('conversions')
-            .select('revenue_amount')
-            .eq('rep_id', rep.id)
-            .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
-
-          const revenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
-
-          return {
-            ...rep,
-            visits: visits || 0,
-            leads: leads || 0,
-            revenue,
-            conversions: conversions?.length || 0
-          };
-        })
-      );
-
-      return repData;
-    }
-  });
+  if (currentView === 'conversions') {
+    return <ConversionsDetailPage onBack={() => setCurrentView('dashboard')} />;
+  }
 
   const statCards = [
     {
-      title: "Team Members",
-      value: teamStats?.teamSize || 0,
-      icon: Users,
+      title: "Visits",
+      value: stats?.visits ?? (isLoading ? '...' : 0),
+      icon: Calendar,
       color: "blue",
-      description: "Active representatives"
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('visits')
     },
     {
-      title: "Total Visits",
-      value: teamStats?.totalVisits || 0,
-      icon: TrendingUp,
+      title: "Leads Generated",
+      value: stats?.leads ?? (isLoading ? '...' : 0),
+      icon: Users,
       color: "green",
-      description: "This month"
-    },
-    {
-      title: "Total Leads",
-      value: teamStats?.totalLeads || 0,
-      icon: Target,
-      color: "purple",
-      description: "This month"
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('leads')
     },
     {
       title: "Revenue",
-      value: `$${teamStats?.totalRevenue?.toLocaleString() || 0}`,
+      value: stats?.baseCurrency ? `${stats.baseCurrency} ${stats.revenue?.toLocaleString()}` : (isLoading ? '...' : 'USD 0'),
       icon: DollarSign,
+      color: "purple",
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('conversions')
+    },
+    {
+      title: "Conversions",
+      value: stats?.conversions ?? (isLoading ? '...' : 0),
+      icon: Target,
       color: "orange",
-      description: "This month"
+      description: `This ${selectedPeriod}`,
+      onClick: () => setCurrentView('conversions')
     }
   ];
 
@@ -145,48 +158,67 @@ export const ManagerDashboard = () => {
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  if (isLoading || isLoadingPerformance) {
-    return (
-      <div className="space-y-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-24 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Team Overview</h2>
-        <p className="text-gray-600">Monitor your team's performance and progress</p>
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-4">
+        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
+          <Plus className="h-4 w-4 mr-2" />
+          Log Visit
+        </Button>
+        <Button onClick={() => setAddLeadOpen(true)} variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Lead
+        </Button>
+        <Button onClick={() => setSetGoalsOpen(true)} variant="outline">
+          <Target className="h-4 w-4 mr-2" />
+          Set Goals
+        </Button>
+      </div>
+
+      {/* Period Selector */}
+      <div className="flex gap-2">
+        <Button 
+          variant={selectedPeriod === "day" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("day")}
+        >
+          Today
+        </Button>
+        <Button 
+          variant={selectedPeriod === "week" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("week")}
+        >
+          This Week
+        </Button>
+        <Button 
+          variant={selectedPeriod === "month" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("month")}
+        >
+          This Month
+        </Button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm">
+          <Card 
+            key={index} 
+            className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
+            onClick={stat.onClick}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1">
+                  {isLoading ? (
+                    <span className="animate-pulse text-gray-400">...</span>
+                  ) : (
+                    stat.value
+                  )}
+                </p>
                 <p className="text-xs text-gray-500">{stat.description}</p>
               </div>
               <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
@@ -197,58 +229,64 @@ export const ManagerDashboard = () => {
         ))}
       </div>
 
-      {/* Team Performance Table */}
-      <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Team Performance</h3>
-        <div className="space-y-4">
-          {repPerformance?.map((rep, index) => (
-            <div key={index} className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={rep?.avatar_url || ''} />
-                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold">
-                    {rep?.full_name 
-                      ? getInitials(rep.full_name)
-                      : rep?.email ? getInitials(rep.email) : 'U'
-                    }
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{rep.full_name || rep.email}</h4>
-                      <p className="text-sm text-gray-600 capitalize">{rep.role}</p>
-                    </div>
-                    <Badge variant={rep.role === 'admin' ? 'default' : 'secondary'}>
-                      {rep.role}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-gray-500">Visits</p>
-                      <p className="font-semibold text-gray-900">{rep.visits}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Leads</p>
-                      <p className="font-semibold text-gray-900">{rep.leads}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Conversions</p>
-                      <p className="font-semibold text-gray-900">{rep.conversions}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Revenue</p>
-                      <p className="font-semibold text-green-600">${rep.revenue.toLocaleString()}</p>
-                    </div>
-                  </div>
+      {/* Goals Progress */}
+      {isLoading ? (
+        <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+          <div className="space-y-4">
+            {[1, 2].map((_, idx) => (
+              <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
+                <div>
+                  <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 w-40 bg-gray-200 rounded"></div>
+                </div>
+                <div className="text-right">
+                  <div className="h-5 w-16 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-3 w-20 bg-gray-200 rounded"></div>
                 </div>
               </div>
+            ))}
+          </div>
+        </Card>
+      ) : (
+        stats?.goals && stats.goals.length > 0 && (
+          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+            <div className="space-y-4">
+              {stats.goals.map((goal: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 capitalize">{goal.goal_type}</h4>
+                    <p className="text-sm text-gray-600">{goal.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-gray-900">
+                      {Number(goal.current_value)} / {Number(goal.target_value)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        )
+      )}
+
+      {/* Forms */}
+      <LogVisitForm open={logVisitOpen} onOpenChange={(open) => {
+        setLogVisitOpen(open);
+        if (!open) refetch();
+      }} />
+      <AddLeadForm open={addLeadOpen} onOpenChange={(open) => {
+        setAddLeadOpen(open);
+        if (!open) refetch();
+      }} />
+      <SetGoalsForm open={setGoalsOpen} onOpenChange={(open) => {
+        setSetGoalsOpen(open);
+        if (!open) refetch();
+      }} />
     </div>
   );
 };

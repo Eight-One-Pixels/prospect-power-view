@@ -23,6 +23,7 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
   const { user } = useAuth();
   const [goalType, setGoalType] = useState("");
   const [targetValue, setTargetValue] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [periodStart, setPeriodStart] = useState<Date>(new Date());
   const [periodEnd, setPeriodEnd] = useState<Date>(new Date());
   const [description, setDescription] = useState("");
@@ -34,17 +35,24 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
 
     setLoading(true);
     try {
+      const goalData: any = {
+        user_id: user.id,
+        goal_type: goalType,
+        target_value: parseFloat(targetValue),
+        current_value: 0,
+        period_start: format(periodStart, 'yyyy-MM-dd'),
+        period_end: format(periodEnd, 'yyyy-MM-dd'),
+        description
+      };
+
+      // Add currency for revenue goals
+      if (goalType === 'revenue') {
+        goalData.currency = currency;
+      }
+
       const { error } = await supabase
         .from('goals')
-        .insert({
-          user_id: user.id,
-          goal_type: goalType,
-          target_value: parseFloat(targetValue),
-          current_value: 0,
-          period_start: format(periodStart, 'yyyy-MM-dd'),
-          period_end: format(periodEnd, 'yyyy-MM-dd'),
-          description
-        });
+        .insert(goalData);
 
       if (error) throw error;
 
@@ -53,6 +61,7 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
       // Reset form
       setGoalType("");
       setTargetValue("");
+      setCurrency("USD");
       setDescription("");
       setPeriodStart(new Date());
       setPeriodEnd(new Date());
@@ -63,6 +72,30 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
       setLoading(false);
     }
   };
+
+  const currencies = [
+    { code: 'USD', name: 'US Dollar' },
+    { code: 'EUR', name: 'Euro' },
+    { code: 'GBP', name: 'British Pound' },
+    { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'CAD', name: 'Canadian Dollar' },
+    { code: 'AUD', name: 'Australian Dollar' },
+    { code: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', name: 'Chinese Yuan' },
+    { code: 'INR', name: 'Indian Rupee' },
+    { code: 'BRL', name: 'Brazilian Real' },
+    { code: 'ZAR', name: 'South African Rand' },
+    { code: 'NGN', name: 'Nigerian Naira' },
+    { code: 'KES', name: 'Kenyan Shilling' },
+    { code: 'GHS', name: 'Ghanaian Cedi' },
+    { code: 'EGP', name: 'Egyptian Pound' },
+    { code: 'MAD', name: 'Moroccan Dirham' },
+    { code: 'TND', name: 'Tunisian Dinar' },
+    { code: 'AED', name: 'UAE Dirham' },
+    { code: 'SAR', name: 'Saudi Riyal' },
+    { code: 'QAR', name: 'Qatari Riyal' },
+    { code: 'MWK', name: 'Malawi Kwacha' }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,6 +129,24 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
               required
             />
           </div>
+
+          {goalType === 'revenue' && (
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border shadow-lg max-h-60 overflow-y-auto">
+                  {currencies.map((curr) => (
+                    <SelectItem key={curr.code} value={curr.code}>
+                      {curr.code} - {curr.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

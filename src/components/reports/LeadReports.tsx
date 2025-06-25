@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +34,10 @@ export const LeadReports = () => {
       
       let query = supabase
         .from('leads')
-        .select('*');
+        .select(`
+          *,
+          profiles:created_by (full_name, email)
+        `);
 
       // Filter by user if not manager/admin
       if (!['manager', 'director', 'admin'].includes(userRole || '')) {
@@ -96,7 +100,7 @@ export const LeadReports = () => {
     }
 
     const csvContent = [
-      ['Date', 'Company', 'Contact', 'Source', 'Status', 'Est. Revenue', 'Currency'].join(','),
+      ['Date', 'Company', 'Contact', 'Source', 'Status', 'Est. Revenue', 'Currency', 'Sales Rep'].join(','),
       ...leads.map(lead => [
         format(new Date(lead.created_at), 'yyyy-MM-dd'),
         `"${lead.company_name}"`,
@@ -104,7 +108,8 @@ export const LeadReports = () => {
         lead.source,
         lead.status,
         lead.estimated_revenue || 0,
-        lead.currency || 'USD'
+        lead.currency || 'USD',
+        `"${lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}"`
       ].join(','))
     ].join('\n');
 
@@ -130,10 +135,6 @@ export const LeadReports = () => {
     };
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
-
-  const totalEstimatedRevenue = leads?.reduce((sum, lead) => 
-    sum + (Number(lead.estimated_revenue) || 0), 0
-  ) || 0;
 
   const leadsByStatus = leads?.reduce((acc, lead) => {
     acc[lead.status || 'unknown'] = (acc[lead.status || 'unknown'] || 0) + 1;
@@ -221,6 +222,7 @@ export const LeadReports = () => {
                   <TableHead>Source</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Est. Revenue</TableHead>
+                  <TableHead>Sales Rep</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -243,6 +245,11 @@ export const LeadReports = () => {
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600">
+                        {lead.profiles?.full_name || lead.profiles?.email || 'Unknown'}
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}
