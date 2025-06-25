@@ -104,7 +104,8 @@ export const NotificationCenter = () => {
       showSuccessToast("Follow-up marked as completed");
     },
     onError: (error) => {
-      showErrorToast(`Failed to update follow-up: ${error.message}`);
+      const errorMessage = (error instanceof Error) ? error.message : String(error);
+      showErrorToast(`Failed to update follow-up: ${errorMessage}`);
     }
   });
 
@@ -122,7 +123,8 @@ export const NotificationCenter = () => {
       showSuccessToast("Visit marked as completed");
     },
     onError: (error) => {
-      showErrorToast(`Failed to update visit: ${error.message}`);
+      const errorMessage = (error instanceof Error) ? error.message : String(error);
+      showErrorToast(`Failed to update visit: ${errorMessage}`);
     }
   });
 
