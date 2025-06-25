@@ -141,6 +141,7 @@ export type Database = {
       goals: {
         Row: {
           created_at: string | null
+          currency: string | null
           current_value: number | null
           description: string | null
           goal_type: string
@@ -153,6 +154,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          currency?: string | null
           current_value?: number | null
           description?: string | null
           goal_type: string
@@ -165,6 +167,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          currency?: string | null
           current_value?: number | null
           description?: string | null
           goal_type?: string

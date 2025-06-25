@@ -17,16 +17,18 @@ import { toast } from "sonner";
 interface SetGoalsFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  goal?: any;
+  onGoalUpdated?: () => void;
 }
 
-export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
+export const SetGoalsForm = ({ open, onOpenChange, goal, onGoalUpdated }: SetGoalsFormProps) => {
   const { user } = useAuth();
-  const [goalType, setGoalType] = useState("");
-  const [targetValue, setTargetValue] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [periodStart, setPeriodStart] = useState<Date>(new Date());
-  const [periodEnd, setPeriodEnd] = useState<Date>(new Date());
-  const [description, setDescription] = useState("");
+  const [goalType, setGoalType] = useState(goal?.goal_type || "");
+  const [targetValue, setTargetValue] = useState(goal?.target_value?.toString() || "");
+  const [currency, setCurrency] = useState(goal?.currency || "USD");
+  const [periodStart, setPeriodStart] = useState<Date>(goal?.period_start ? new Date(goal.period_start) : new Date());
+  const [periodEnd, setPeriodEnd] = useState<Date>(goal?.period_end ? new Date(goal.period_end) : new Date());
+  const [description, setDescription] = useState(goal?.description || "");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +41,7 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
         user_id: user.id,
         goal_type: goalType,
         target_value: parseFloat(targetValue),
-        current_value: 0,
+        current_value: goal?.current_value || 0,
         period_start: format(periodStart, 'yyyy-MM-dd'),
         period_end: format(periodEnd, 'yyyy-MM-dd'),
         description
@@ -50,13 +52,24 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
         goalData.currency = currency;
       }
 
-      const { error } = await supabase
-        .from('goals')
-        .insert(goalData);
+      if (goal?.id) {
+        // Update existing goal
+        const { error } = await supabase
+          .from('goals')
+          .update(goalData)
+          .eq('id', goal.id);
+        if (error) throw error;
+        toast.success("Goal updated successfully!");
+      } else {
+        // Create new goal
+        const { error } = await supabase
+          .from('goals')
+          .insert(goalData);
+        if (error) throw error;
+        toast.success("Goal set successfully!");
+      }
 
-      if (error) throw error;
-
-      toast.success("Goal set successfully!");
+      onGoalUpdated?.();
       onOpenChange(false);
       // Reset form
       setGoalType("");
@@ -66,8 +79,8 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
       setPeriodStart(new Date());
       setPeriodEnd(new Date());
     } catch (error) {
-      console.error('Error setting goal:', error);
-      toast.error("Failed to set goal");
+      console.error('Error saving goal:', error);
+      toast.error("Failed to save goal");
     } finally {
       setLoading(false);
     }
@@ -101,7 +114,7 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Set New Goal</DialogTitle>
+          <DialogTitle>{goal ? 'Edit Goal' : 'Set New Goal'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -211,7 +224,7 @@ export const SetGoalsForm = ({ open, onOpenChange }: SetGoalsFormProps) => {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Set Goal"}
+              {loading ? "Saving..." : goal ? "Update Goal" : "Set Goal"}
             </Button>
           </div>
         </form>
