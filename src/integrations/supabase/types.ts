@@ -60,7 +60,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "conversions_rep_id_fkey1"
+            columns: ["rep_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_roles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       daily_visits: {
@@ -232,7 +239,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "leads_created_by_fkey1"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_roles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -305,7 +319,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles_with_roles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       user_roles: {
