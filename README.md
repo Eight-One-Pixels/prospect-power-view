@@ -1,73 +1,102 @@
-# Welcome to your Lovable project
+# 🧭 Lead Tracker Dashboard
 
-## Project info
+**A lightweight, secure, and efficient sales lead tracking system built with React and Supabase.**
 
-**URL**: https://lovable.dev/projects/690a8667-6914-48e9-9a36-c30d86a32039
+---
 
-## How can I edit this code?
+## 📌 Overview
 
-There are several ways of editing your application.
+The **Lead Tracker Dashboard** is a modern web-based application designed to help sales representatives and sales departments **track, manage, and report their daily sales activities and client visitations.** Whether you're an individual sales agent or a corporate team, this system offers an intuitive dashboard to log leads, monitor visits, and generate actionable insights — in real time.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/690a8667-6914-48e9-9a36-c30d86a32039) and start prompting.
+## 🚀 Features
 
-Changes made via Lovable will be committed automatically to this repo.
+✅ **User Authentication** – Secure login with email/password (powered by Supabase Auth)  
+✅ **Daily Activity Logging** – Submit details of client visits, business opportunities, and notes  
+✅ **Personal Dashboard** – View your logged visits with timestamps and location tracking  
+✅ **Simple Reporting** – Export visit data or view inline reports  
+✅ **Mobile-Ready UI** – Optimized for on-the-go sales reps  
+✅ **Built on modern tools** – React + Supabase = Scalable, Flexible, Reliable
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠️ Use Cases
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- 🔹 **Sales reps** tracking client visits, prospecting activity, and follow-ups  
+- 🔹 **Sales teams** managing decentralized agents with real-time submission logs  
+- 🔹 **Sales managers** generating performance reports for field agents  
+- 🔹 **Marketing teams** identifying hot lead areas and opportunity hotspots  
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🏗️ Deployment Options
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 🌐 Online Web Version
+We can help you deploy this app to your **existing domain** (e.g., `sales.yourcompany.com`) as a seamless web-based tool.
 
-# Step 3: Install the necessary dependencies.
+### 🖥️ Local/Offline Network Version
+Prefer a secure internal network? We can install this tool on individual laptops or PCs — fully functional **within your local office or branch network** with no need for cloud access.
+
+---
+
+## 📦 Tech Stack
+
+- **Frontend**: React (Vite + TypeScript)
+- **Backend**: Supabase (PostgreSQL, Auth, RLS)
+- **Auth**: Email/Password login with session persistence
+- **Storage**: Secure cloud database with optional self-hosted alternatives
+
+- **Languages**: 
+Vite, TypeScript, React, shadcn-ui, Tailwind CSS
+
+---
+
+## 🔧 Getting Started (for developers)
+
+```bash
+# Clone the repo
+git clone https://github.com/Eight-One-Pixels/prospect-power-view.git
+cd prospect-power-view
+
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Add your Supabase project credentials
+# In the root of the project, create a `.env` file:
+REACT_APP_SUPABASE_URL=your_supabase_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Start the app
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📩 Want This for Your Sales Team?
+Whether you're a small business or a large marketing firm — we offer custom implementation tailored to your needs:
 
-**Use GitHub Codespaces**
+- ✅ Integrate with your website or subdomain
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- ✅ Deploy internally for in-office sales teams
 
-## What technologies are used for this project?
+- ✅ Brand it with your own logo and company name
 
-This project is built with:
+- ✅ Provide training and documentation
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Take a look at the live demo at [Alo—Sales Dashboard](https://alo-sales-v1-0-1.vercel.app/) to see it in action!
+📧 Contact me at [johnlivingprooff@gmail.com](mailto:johnlivingprooff@gmail.com) to discuss setup options.
 
-## How can I deploy this project?
+<br><br>
 
-Simply open [Lovable](https://lovable.dev/projects/690a8667-6914-48e9-9a36-c30d86a32039) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
 
-Yes, you can!
+## 📜 License
+This project is licensed under the MIT License — feel free to adapt it to your needs.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🙌 Contributing
+If you'd like to help improve this project — whether it's adding features, improving UI, or translating to other languages — feel free to open a pull request or issue.
+
+Built in Collaboration with [Lovable.dev](https://lovable.dev) by [Eight One Pixels](https://81px.vercel.app)

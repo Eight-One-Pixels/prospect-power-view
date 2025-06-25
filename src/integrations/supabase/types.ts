@@ -55,7 +55,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "conversions_rep_id_fkey"
+            foreignKeyName: "conversions_rep_id_fkey1"
             columns: ["rep_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -227,7 +227,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "leads_created_by_fkey"
+            foreignKeyName: "leads_created_by_fkey1"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
