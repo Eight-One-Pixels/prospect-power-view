@@ -178,28 +178,27 @@ export const RepDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4 w-full sm:w-auto">
-        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 w-full sm:w-auto text-sm sm:text-base">
+      <div className="flex flex-row flex-wrap gap-4 w-full sm:w-auto mb-2">
+        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
           Log Visit
         </Button>
-        <Button onClick={() => setAddLeadOpen(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
+        <Button onClick={() => setAddLeadOpen(true)} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
           Add Lead
         </Button>
-        <Button onClick={() => setSetGoalsOpen(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
+        <Button onClick={() => setSetGoalsOpen(true)} variant="outline">
           <Target className="h-4 w-4 mr-2" />
           Set Goals
         </Button>
       </div>
 
       {/* Period Selector */}
-      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <div className="flex flex-row gap-2 w-full sm:w-auto mb-4">
         <Button 
           variant={selectedPeriod === "day" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("day")}
-          className="w-full sm:w-auto"
         >
           Today
         </Button>
@@ -207,7 +206,6 @@ export const RepDashboard = () => {
           variant={selectedPeriod === "week" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("week")}
-          className="w-full sm:w-auto"
         >
           This Week
         </Button>
@@ -215,7 +213,6 @@ export const RepDashboard = () => {
           variant={selectedPeriod === "month" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("month")}
-          className="w-full sm:w-auto"
         >
           This Month
         </Button>

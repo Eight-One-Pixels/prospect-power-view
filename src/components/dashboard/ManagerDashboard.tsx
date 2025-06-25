@@ -184,7 +184,7 @@ export const ManagerDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-row flex-wrap gap-4 w-full sm:w-auto mb-2">
         <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
           Log/Schedule Visit
@@ -200,7 +200,7 @@ export const ManagerDashboard = () => {
       </div>
 
       {/* Period Selector */}
-      <div className="flex gap-2">
+      <div className="flex flex-row gap-2 w-full sm:w-auto mb-4">
         <Button 
           variant={selectedPeriod === "day" ? "default" : "outline"}
           size="sm"

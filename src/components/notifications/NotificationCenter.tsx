@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -210,7 +209,18 @@ export const NotificationCenter = () => {
       </Button>
 
       {showNotifications && (
-        <div className="absolute right-0 top-12 z-50 w-96 max-w-[calc(100vw-2rem)]">
+        <div
+          className={
+            typeof window !== 'undefined' && window.innerWidth < 640
+              ? 'fixed left-1/2 top-16 z-50 w-96 max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-gray-200 rounded-lg shadow-xl animate-fade-in transform -translate-x-1/2'
+              : 'absolute z-50 w-96 max-w-[calc(100vw-1rem)] overflow-hidden bg-white border border-gray-200 rounded-lg shadow-xl animate-fade-in'
+          }
+          style={
+            typeof window !== 'undefined' && window.innerWidth < 640
+              ? { right: undefined, left: undefined, top: '4rem' }
+              : { right: 0, top: '3rem', left: undefined }
+          }
+        >
           <Card className="p-4 bg-white border shadow-xl rounded-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-lg">Notifications</h3>
