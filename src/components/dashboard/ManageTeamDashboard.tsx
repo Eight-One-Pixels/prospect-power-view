@@ -5,43 +5,59 @@ import { Card } from "@/components/ui/card";
 import { Users, TrendingUp, Target, DollarSign } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
+import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
+import { DetailedLeadsTable } from "../tables/DetailedLeadsTable";
+import { DetailedConversionsTable } from "../tables/DetailedConversionsTable";
 
 export const ManageTeamDashboard = () => {
   const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, base: string } | null>(null);
+  const [showVisitsTable, setShowVisitsTable] = useState(false);
+  const [showLeadsTable, setShowLeadsTable] = useState(false);
+  const [showConversionsTable, setShowConversionsTable] = useState(false);
 
   // Fetch team overview stats
   const { data: teamStats, isLoading } = useQuery({
-    queryKey: ['team-stats'],
+    queryKey: ['team-stats', selectedPeriod],
     queryFn: async () => {
       const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let startDate: Date;
+      
+      if (selectedPeriod === "day") {
+        startDate = today;
+      } else if (selectedPeriod === "week") {
+        startDate = new Date(today.setDate(today.getDate() - 7));
+      } else {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      }
       
       // Get all team members with their roles
       const { data: teamMembers } = await supabase
         .from('profiles_with_roles')
         .select('*');
 
-      // Get total visits this month
+      // Get total visits
       const { count: totalVisits } = await supabase
         .from('daily_visits')
         .select('*', { count: 'exact', head: true })
-        .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
+        .gte('visit_date', startDate.toISOString().split('T')[0]);
 
-      // Get total leads this month
+      // Get total leads
       const { count: totalLeads } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', startOfMonth.toISOString());
+        .gte('created_at', startDate.toISOString());
 
-      // Get total conversions and revenue this month
+      // Get total conversions and revenue
       const { data: conversions } = await supabase
         .from('conversions')
         .select('revenue_amount, currency')
-        .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
+        .gte('conversion_date', startDate.toISOString().split('T')[0]);
 
       return {
         teamSize: teamMembers?.length || 0,
@@ -81,10 +97,18 @@ export const ManageTeamDashboard = () => {
 
   // Fetch individual rep performance
   const { data: repPerformance, isLoading: isLoadingPerformance } = useQuery({
-    queryKey: ['rep-performance'],
+    queryKey: ['rep-performance', selectedPeriod],
     queryFn: async () => {
       const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let startDate: Date;
+      
+      if (selectedPeriod === "day") {
+        startDate = today;
+      } else if (selectedPeriod === "week") {
+        startDate = new Date(today.setDate(today.getDate() - 7));
+      } else {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      }
 
       // Get all reps with their performance data
       const { data: reps } = await supabase
@@ -96,26 +120,26 @@ export const ManageTeamDashboard = () => {
 
       const repData = await Promise.all(
         reps.map(async (rep) => {
-          // Get visits for this rep this month
+          // Get visits for this rep
           const { count: visits } = await supabase
             .from('daily_visits')
             .select('*', { count: 'exact', head: true })
             .eq('rep_id', rep.id)
-            .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
+            .gte('visit_date', startDate.toISOString().split('T')[0]);
 
-          // Get leads for this rep this month
+          // Get leads for this rep
           const { count: leads } = await supabase
             .from('leads')
             .select('*', { count: 'exact', head: true })
             .eq('created_by', rep.id)
-            .gte('created_at', startOfMonth.toISOString());
+            .gte('created_at', startDate.toISOString());
 
-          // Get conversions and revenue for this rep this month
+          // Get conversions and revenue for this rep
           const { data: conversions } = await supabase
             .from('conversions')
             .select('revenue_amount, currency')
             .eq('rep_id', rep.id)
-            .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
+            .gte('conversion_date', startDate.toISOString().split('T')[0]);
 
           // Convert revenue to user's base currency
           let revenue = 0;
@@ -155,28 +179,32 @@ export const ManageTeamDashboard = () => {
       value: teamStats?.teamSize || 0,
       icon: Users,
       color: "blue",
-      description: "Active representatives"
+      description: "Active representatives",
+      onClick: null
     },
     {
-      title: "Total Visits",
+      title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Visits`,
       value: teamStats?.totalVisits || 0,
       icon: TrendingUp,
       color: "green",
-      description: "This month"
+      description: "All teams",
+      onClick: () => setShowVisitsTable(true)
     },
     {
-      title: "Total Leads",
+      title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Leads`,
       value: teamStats?.totalLeads || 0,
       icon: Target,
       color: "purple",
-      description: "This month"
+      description: "Organization wide",
+      onClick: () => setShowLeadsTable(true)
     },
     {
       title: "Revenue",
       value: convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...',
       icon: DollarSign,
       color: "orange",
-      description: "This month"
+      description: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This week' : 'This month'}`,
+      onClick: () => setShowConversionsTable(true)
     }
   ];
 
@@ -224,10 +252,41 @@ export const ManageTeamDashboard = () => {
         <p className="text-gray-600">Monitor your team's performance and progress</p>
       </div>
 
+      {/* Period Selector */}
+      <div className="flex gap-2">
+        <Button 
+          variant={selectedPeriod === "day" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("day")}
+        >
+          Today
+        </Button>
+        <Button 
+          variant={selectedPeriod === "week" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("week")}
+        >
+          This Week
+        </Button>
+        <Button 
+          variant={selectedPeriod === "month" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("month")}
+        >
+          This Month
+        </Button>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm">
+          <Card 
+            key={index} 
+            className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm ${
+              stat.onClick ? 'cursor-pointer' : ''
+            }`}
+            onClick={stat.onClick || undefined}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
@@ -296,6 +355,26 @@ export const ManageTeamDashboard = () => {
           ))}
         </div>
       </Card>
+
+      {/* Detailed Tables */}
+      <DetailedVisitsTable 
+        open={showVisitsTable} 
+        onOpenChange={setShowVisitsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Team Visits"
+      />
+      <DetailedLeadsTable 
+        open={showLeadsTable} 
+        onOpenChange={setShowLeadsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Team Leads"
+      />
+      <DetailedConversionsTable 
+        open={showConversionsTable} 
+        onOpenChange={setShowConversionsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Team Conversions"
+      />
     </div>
   );
 };

@@ -166,12 +166,6 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
         <AddLeadForm
           open={showLeadForm}
           onOpenChange={setShowLeadForm}
-          prefilledData={{
-            company_name: convertingVisit.company_name,
-            contact_name: convertingVisit.contact_person || '',
-            contact_email: convertingVisit.contact_email || '',
-            source: 'Visit Conversion'
-          }}
           onLeadCreated={handleLeadCreated}
         />
       )}

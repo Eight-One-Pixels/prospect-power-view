@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -9,40 +10,55 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
+import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
+import { DetailedLeadsTable } from "../tables/DetailedLeadsTable";
+import { DetailedConversionsTable } from "../tables/DetailedConversionsTable";
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [convertedStats, setConvertedStats] = useState<{ totalRevenue: number, baseCurrency: string } | null>(null);
+  const [showVisitsTable, setShowVisitsTable] = useState(false);
+  const [showLeadsTable, setShowLeadsTable] = useState(false);
+  const [showConversionsTable, setShowConversionsTable] = useState(false);
 
   // Fetch organization overview stats
   const { data: orgStats, isLoading } = useQuery({
-    queryKey: ['org-stats'],
+    queryKey: ['org-stats', selectedPeriod],
     queryFn: async () => {
       const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let startDate: Date;
+      
+      if (selectedPeriod === "day") {
+        startDate = today;
+      } else if (selectedPeriod === "week") {
+        startDate = new Date(today.setDate(today.getDate() - 7));
+      } else {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      }
       
       // Get all users
       const { data: allUsers } = await supabase
         .from('profiles_with_roles')
         .select('*');
 
-      // Get total visits this month
+      // Get total visits
       const { count: totalVisits } = await supabase
         .from('daily_visits')
         .select('*', { count: 'exact', head: true })
-        .gte('visit_date', startOfMonth.toISOString().split('T')[0]);
+        .gte('visit_date', startDate.toISOString().split('T')[0]);
 
-      // Get total leads this month
+      // Get total leads
       const { count: totalLeads } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', startOfMonth.toISOString());
+        .gte('created_at', startDate.toISOString());
 
-      // Get total conversions and revenue this month
+      // Get total conversions and revenue
       const { data: conversions } = await supabase
         .from('conversions')
         .select('revenue_amount, currency')
-        .gte('conversion_date', startOfMonth.toISOString().split('T')[0]);
+        .gte('conversion_date', startDate.toISOString().split('T')[0]);
 
       return {
         totalUsers: allUsers?.length || 0,
@@ -85,10 +101,18 @@ export const AdminDashboard = () => {
 
   // Fetch recent activity
   const { data: recentActivity } = useQuery({
-    queryKey: ['recent-activity'],
+    queryKey: ['recent-activity', selectedPeriod],
     queryFn: async () => {
       const today = new Date();
-      const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
+      let startDate: Date;
+      
+      if (selectedPeriod === "day") {
+        startDate = today;
+      } else if (selectedPeriod === "week") {
+        startDate = new Date(today.setDate(today.getDate() - 7));
+      } else {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      }
 
       // Get recent leads with creator info
       const { data: recentLeads } = await supabase
@@ -100,9 +124,9 @@ export const AdminDashboard = () => {
           status,
           created_at,
           created_by,
-          profiles:created_by(full_name, email)
+          profiles:created_by!inner(full_name, email)
         `)
-        .gte('created_at', sevenDaysAgo.toISOString())
+        .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -117,9 +141,9 @@ export const AdminDashboard = () => {
           rep_id,
           lead_id,
           leads!inner(company_name, contact_name),
-          profiles:rep_id(full_name, email)
+          profiles:rep_id!inner(full_name, email)
         `)
-        .gte('conversion_date', sevenDaysAgo.toISOString().split('T')[0])
+        .gte('conversion_date', startDate.toISOString().split('T')[0])
         .order('conversion_date', { ascending: false })
         .limit(5);
 
@@ -136,28 +160,32 @@ export const AdminDashboard = () => {
       value: orgStats?.totalUsers || 0,
       icon: Users,
       color: "blue",
-      description: "Active users"
+      description: "Active users",
+      onClick: null
     },
     {
-      title: "This Month Visits",
+      title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Visits`,
       value: orgStats?.totalVisits || 0,
       icon: Activity,
       color: "green",
-      description: "All teams"
+      description: "All teams",
+      onClick: () => setShowVisitsTable(true)
     },
     {
-      title: "This Month Leads",
+      title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Leads`,
       value: orgStats?.totalLeads || 0,
       icon: Building,
       color: "purple",
-      description: "Organization wide"
+      description: "Organization wide",
+      onClick: () => setShowLeadsTable(true)
     },
     {
       title: "Total Revenue",
       value: convertedStats ? `${convertedStats.baseCurrency} ${convertedStats.totalRevenue.toLocaleString()}` : '...',
       icon: DollarSign,
       color: "orange",
-      description: "This month"
+      description: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This week' : 'This month'}`,
+      onClick: () => setShowConversionsTable(true)
     }
   ];
 
@@ -213,10 +241,41 @@ export const AdminDashboard = () => {
         </Link>
       </div>
 
+      {/* Period Selector */}
+      <div className="flex gap-2">
+        <Button 
+          variant={selectedPeriod === "day" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("day")}
+        >
+          Today
+        </Button>
+        <Button 
+          variant={selectedPeriod === "week" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("week")}
+        >
+          This Week
+        </Button>
+        <Button 
+          variant={selectedPeriod === "month" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedPeriod("month")}
+        >
+          This Month
+        </Button>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm">
+          <Card 
+            key={index} 
+            className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm ${
+              stat.onClick ? 'cursor-pointer' : ''
+            }`}
+            onClick={stat.onClick || undefined}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
@@ -275,6 +334,26 @@ export const AdminDashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Detailed Tables */}
+      <DetailedVisitsTable 
+        open={showVisitsTable} 
+        onOpenChange={setShowVisitsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Organization Visits"
+      />
+      <DetailedLeadsTable 
+        open={showLeadsTable} 
+        onOpenChange={setShowLeadsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Organization Leads"
+      />
+      <DetailedConversionsTable 
+        open={showConversionsTable} 
+        onOpenChange={setShowConversionsTable}
+        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+        title="Organization Conversions"
+      />
     </div>
   );
 };

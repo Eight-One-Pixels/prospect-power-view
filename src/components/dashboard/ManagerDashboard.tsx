@@ -12,9 +12,10 @@ import { SetGoalsForm } from "../forms/SetGoalsForm";
 import { LeadsDetailPage } from "../details/LeadsDetailPage";
 import { VisitsDetailPage } from "../details/VisitsDetailPage";
 import { ConversionsDetailPage } from "../details/ConversionsDetailPage";
+import { GoalsTable } from "../GoalsTable";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 
-type DetailView = 'dashboard' | 'leads' | 'visits' | 'conversions';
+type DetailView = 'dashboard' | 'leads' | 'visits' | 'conversions' | 'goals';
 
 export const ManagerDashboard = () => {
   const { user } = useAuth();
@@ -23,7 +24,6 @@ export const ManagerDashboard = () => {
   const [logVisitOpen, setLogVisitOpen] = useState(false);
   const [setGoalsOpen, setSetGoalsOpen] = useState(false);
   const [currentView, setCurrentView] = useState<DetailView>('dashboard');
-  const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, base: string } | null>(null);
 
   // Fetch user's stats (personal stats for the manager)
   const { data: stats, isLoading, refetch } = useQuery({
@@ -113,6 +113,30 @@ export const ManagerDashboard = () => {
     return <ConversionsDetailPage onBack={() => setCurrentView('dashboard')} />;
   }
 
+  if (currentView === 'goals') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button onClick={() => setCurrentView('dashboard')} variant="outline">
+            ← Back to Dashboard
+          </Button>
+          <Button onClick={() => setSetGoalsOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Set New Goal
+          </Button>
+        </div>
+        <GoalsTable />
+        <SetGoalsForm 
+          open={setGoalsOpen} 
+          onOpenChange={(open) => {
+            setSetGoalsOpen(open);
+            if (!open) refetch();
+          }} 
+        />
+      </div>
+    );
+  }
+
   const statCards = [
     {
       title: "Visits",
@@ -164,7 +188,7 @@ export const ManagerDashboard = () => {
       <div className="flex flex-wrap gap-4">
         <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
           <Plus className="h-4 w-4 mr-2" />
-          Log Visit
+          Log/Schedule Visit
         </Button>
         <Button onClick={() => setAddLeadOpen(true)} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
@@ -250,10 +274,13 @@ export const ManagerDashboard = () => {
         </Card>
       ) : (
         stats?.goals && stats.goals.length > 0 && (
-          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md cursor-pointer" onClick={() => setCurrentView('goals')}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Current Goals</h3>
+              <Button variant="ghost" size="sm">View All</Button>
+            </div>
             <div className="space-y-4">
-              {stats.goals.map((goal: any, index: number) => (
+              {stats.goals.slice(0, 3).map((goal: any, index: number) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <h4 className="font-semibold text-gray-900 capitalize">{goal.goal_type}</h4>
@@ -280,7 +307,7 @@ export const ManagerDashboard = () => {
         if (!open) refetch();
       }} />
       <AddLeadForm open={addLeadOpen} onOpenChange={(open) => {
-        setAddLeadOpen(open);
+        setAddLeadForm(open);
         if (!open) refetch();
       }} />
       <SetGoalsForm open={setGoalsOpen} onOpenChange={(open) => {

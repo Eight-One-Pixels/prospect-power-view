@@ -25,7 +25,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
   const [companyName, setCompanyName] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [contactEmail, setContactEmail] = useState("");
-  const [visitType, setVisitType] = useState("");
+  const [visitType, setVisitType] = useState<"cold_call" | "follow_up" | "presentation" | "meeting" | "phone_call" | "">("");
   const [visitDate, setVisitDate] = useState<Date>(new Date());
   const [visitTime, setVisitTime] = useState("");
   const [duration, setDuration] = useState("");
@@ -38,7 +38,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !visitType) return;
 
     setLoading(true);
     try {
@@ -74,7 +74,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
           contact_email: contactEmail || null,
           contact_phone: '', // Will need to be filled later
           source: 'Visit',
-          status: 'new',
+          status: 'new' as const,
           notes: `Generated from visit on ${format(visitDate, 'yyyy-MM-dd')}`
         };
 
@@ -151,7 +151,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="visitType">Visit Type *</Label>
-            <Select value={visitType} onValueChange={setVisitType} required>
+            <Select value={visitType} onValueChange={(value) => setVisitType(value as "cold_call" | "follow_up" | "presentation" | "meeting" | "phone_call")} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select visit type" />
               </SelectTrigger>
