@@ -16,18 +16,18 @@ interface DetailedVisitsTableProps {
   onOpenChange: (open: boolean) => void;
   dateFilter?: 'today' | 'week' | 'month';
   title?: string;
+  scope?: 'team' | 'user';
 }
 
-export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Visits" }: DetailedVisitsTableProps) => {
+export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Visits", scope }: DetailedVisitsTableProps) => {
   const { user, userRole } = useAuth();
   const [convertingVisit, setConvertingVisit] = useState<any>(null);
   const [showLeadForm, setShowLeadForm] = useState(false);
 
   const { data: visits, isLoading } = useQuery({
-    queryKey: ['detailed-visits', user?.id, userRole, dateFilter],
+    queryKey: ['detailed-visits', scope === 'team' ? 'team' : user?.id, userRole, dateFilter],
     queryFn: async () => {
       if (!user) return [];
-      
       let query = supabase
         .from('daily_visits')
         .select(`
@@ -35,8 +35,8 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
           profiles!inner(full_name, email)
         `);
 
-      // Filter by user if not manager/admin
-      if (!['manager', 'director', 'admin'].includes(userRole || '')) {
+      // Only filter by user if not team scope
+      if (scope !== 'team' && !['manager', 'director', 'admin'].includes(userRole || '')) {
         query = query.eq('rep_id', user.id);
       }
 
@@ -45,7 +45,7 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
       if (dateFilter === 'today') {
         query = query.eq('visit_date', format(today, 'yyyy-MM-dd'));
       } else if (dateFilter === 'week') {
-        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
         query = query.gte('visit_date', format(weekStart, 'yyyy-MM-dd'));
       } else if (dateFilter === 'month') {
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);

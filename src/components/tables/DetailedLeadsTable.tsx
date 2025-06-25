@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,16 +11,16 @@ interface DetailedLeadsTableProps {
   onOpenChange: (open: boolean) => void;
   dateFilter?: 'today' | 'week' | 'month';
   title?: string;
+  scope?: 'team' | 'user';
 }
 
-export const DetailedLeadsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Leads" }: DetailedLeadsTableProps) => {
+export const DetailedLeadsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Leads", scope }: DetailedLeadsTableProps) => {
   const { user, userRole } = useAuth();
 
   const { data: leads, isLoading } = useQuery({
-    queryKey: ['detailed-leads', user?.id, userRole, dateFilter],
+    queryKey: ['detailed-leads', scope === 'team' ? 'team' : user?.id, userRole, dateFilter],
     queryFn: async () => {
       if (!user) return [];
-      
       let query = supabase
         .from('leads')
         .select(`
@@ -29,8 +28,8 @@ export const DetailedLeadsTable = ({ open, onOpenChange, dateFilter, title = "De
           profiles!inner(full_name, email)
         `);
 
-      // Filter by user if not manager/admin
-      if (!['manager', 'director', 'admin'].includes(userRole || '')) {
+      // Only filter by user if not team scope
+      if (scope !== 'team' && !['manager', 'director', 'admin'].includes(userRole || '')) {
         query = query.eq('created_by', user.id);
       }
 
@@ -39,7 +38,7 @@ export const DetailedLeadsTable = ({ open, onOpenChange, dateFilter, title = "De
       if (dateFilter === 'today') {
         query = query.gte('created_at', format(today, 'yyyy-MM-dd'));
       } else if (dateFilter === 'week') {
-        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
         query = query.gte('created_at', format(weekStart, 'yyyy-MM-dd'));
       } else if (dateFilter === 'month') {
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);

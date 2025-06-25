@@ -148,25 +148,24 @@ const ManageUsers = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Navigation />
-      
-      <div className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <p className="text-sm text-gray-500 cursor-pointer" onClick={() => navigate("/")}>&larr; Back to Dashboard</p><br />
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+      <div className="container mx-auto px-2 sm:px-4 md:px-6 py-4 md:py-8">
+        <div className="mb-6 md:mb-8">
+          <p className="text-sm text-gray-500 cursor-pointer" onClick={() => navigate("/")}>← Back to Dashboard</p>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 mt-2 md:mt-0">
             Manage Users
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-base md:text-lg text-gray-600">
             Manage user accounts and permissions
           </p>
         </div>
 
-        <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
+        <Card className="p-2 sm:p-4 md:p-6 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 md:mb-6">
             <div className="flex items-center gap-2">
-              <Users className="h-6 w-6 text-indigo-600" />
-              <h2 className="text-xl font-bold text-gray-900">All Users</h2>
+              <Users className="h-5 w-5 md:h-6 md:w-6 text-indigo-600" />
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">All Users</h2>
             </div>
-            <Badge variant="outline" className="flex items-center gap-1">
+            <Badge variant="outline" className="flex items-center gap-1 text-xs md:text-sm">
               <Shield className="h-3 w-3" />
               Admin Access
             </Badge>
@@ -174,92 +173,85 @@ const ManageUsers = () => {
 
           <div className="space-y-4">
             {users.map((user) => (
-              <div key={user.id} className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar_url || ''} />
-                      <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold">
-                        {user.full_name 
-                          ? getInitials(user.full_name)
-                          : user.email ? getInitials(user.email) : 'U'
-                        }
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {user.full_name || user.email}
-                      </h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                      {user.phone && (
-                        <p className="text-sm text-gray-500">{user.phone}</p>
-                      )}
-                    </div>
+              <div key={user.id} className="p-3 sm:p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-row items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <Avatar className="h-10 w-10 md:h-12 md:w-12">
+                    <AvatarImage src={user.avatar_url || ''} />
+                    <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold">
+                      {user.full_name 
+                        ? getInitials(user.full_name)
+                        : user.email ? getInitials(user.email) : 'U'
+                      }
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate max-w-[140px] sm:max-w-xs md:max-w-sm">
+                      {user.full_name || user.email}
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-600 truncate max-w-[140px] sm:max-w-xs md:max-w-sm">{user.email}</p>
+                    {user.phone && (
+                      <p className="text-xs text-gray-500 truncate max-w-[140px] sm:max-w-xs md:max-w-sm">{user.phone}</p>
+                    )}
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">
-                      {user.role || 'No Role'}
-                    </Badge>
-                    
-                    <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingUser(user);
-                              setNewRole(user.role || '');
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit User Role</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>User</Label>
-                              <p className="text-sm text-gray-600">{editingUser?.full_name || editingUser?.email}</p>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="role">Role</Label>
-                              <Select value={newRole} onValueChange={setNewRole}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="rep">Rep</SelectItem>
-                                  <SelectItem value="manager">Manager</SelectItem>
-                                  <SelectItem value="director">Director</SelectItem>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button onClick={updateUserRole} disabled={updating} className="w-full">
-                              {updating ? "Updating..." : "Update Role"}
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
+                </div>
+                <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
+                  <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize text-xs md:text-sm">
+                    {user.role || 'No Role'}
+                  </Badge>
+                  <Badge variant={user.is_active ? 'default' : 'secondary'} className="text-xs md:text-sm">
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <Dialog>
+                    <DialogTrigger asChild>
                       <Button
-                        variant={user.is_active ? "destructive" : "default"}
+                        variant="outline"
                         size="sm"
-                        onClick={() => toggleUserStatus(user.id, user.is_active || false)}
+                        onClick={() => {
+                          setEditingUser(user);
+                          setNewRole(user.role || '');
+                        }}
+                        className="px-2 py-1"
                       >
-                        {user.is_active ? "Deactivate" : "Activate"}
+                        <Edit className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </div>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit User Role</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>User</Label>
+                          <p className="text-sm text-gray-600">{editingUser?.full_name || editingUser?.email}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="role">Role</Label>
+                          <Select value={newRole} onValueChange={setNewRole}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="rep">Rep</SelectItem>
+                              <SelectItem value="manager">Manager</SelectItem>
+                              <SelectItem value="director">Director</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button onClick={updateUserRole} disabled={updating} className="w-full">
+                          {updating ? "Updating..." : "Update Role"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant={user.is_active ? "destructive" : "default"}
+                    size="sm"
+                    onClick={() => toggleUserStatus(user.id, user.is_active || false)}
+                    className="px-2 py-1"
+                  >
+                    {user.is_active ? "Deactivate" : "Activate"}
+                  </Button>
                 </div>
               </div>
             ))}

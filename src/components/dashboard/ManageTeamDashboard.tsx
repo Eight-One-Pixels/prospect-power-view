@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -302,52 +301,51 @@ export const ManageTeamDashboard = () => {
       </div>
 
       {/* Team Performance Table */}
-      <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Team Performance</h3>
-        <div className="space-y-4">
+      <Card className="p-4 sm:p-6 bg-white/80 backdrop-blur-sm border-0 shadow-md">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Team Performance</h3>
+        <div className="flex flex-col gap-4">
           {repPerformance?.map((rep, index) => (
-            <div key={index} className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={rep?.avatar_url || ''} />
-                  <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-semibold">
-                    {rep?.full_name 
-                      ? getInitials(rep.full_name)
-                      : rep?.email ? getInitials(rep.email) : 'U'
-                    }
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{rep.full_name || rep.email}</h4>
-                      <p className="text-sm text-gray-600 capitalize">{rep.role}</p>
-                    </div>
-                    <Badge variant={rep.role === 'admin' ? 'default' : 'secondary'}>
-                      {rep.role}
-                    </Badge>
+            <div
+              key={index}
+              className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+            >
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={rep?.avatar_url || ''} />
+                <AvatarFallback className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-lg font-semibold">
+                  {rep?.full_name 
+                    ? getInitials(rep.full_name)
+                    : rep?.email ? getInitials(rep.email) : 'U'
+                  }
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 text-base truncate max-w-[180px] sm:max-w-xs md:max-w-sm">{rep.full_name || rep.email}</h4>
+                    <p className="text-xs sm:text-sm text-gray-600 capitalize">{rep.role}</p>
                   </div>
-
-                  <div className="grid grid-cols-4 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-gray-500">Visits</p>
-                      <p className="font-semibold text-gray-900">{rep.visits}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Leads</p>
-                      <p className="font-semibold text-gray-900">{rep.leads}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Conversions</p>
-                      <p className="font-semibold text-gray-900">{rep.conversions}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Revenue</p>
-                      <p className="font-semibold text-green-600">
-                        {convertedTotals ? `${convertedTotals.base} ${rep.revenue.toLocaleString()}` : `USD ${rep.revenue.toLocaleString()}`}
-                      </p>
-                    </div>
+                  <Badge variant={rep.role === 'admin' ? 'default' : 'secondary'} className="text-xs sm:text-sm">
+                    {rep.role}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-2">
+                  <div className="bg-blue-50 rounded-lg p-2 flex flex-col items-center">
+                    <p className="text-xs text-gray-500">Visits</p>
+                    <p className="font-semibold text-gray-900 text-base">{rep.visits}</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-2 flex flex-col items-center">
+                    <p className="text-xs text-gray-500">Leads</p>
+                    <p className="font-semibold text-gray-900 text-base">{rep.leads}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-2 flex flex-col items-center">
+                    <p className="text-xs text-gray-500">Conversions</p>
+                    <p className="font-semibold text-gray-900 text-base">{rep.conversions}</p>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-2 flex flex-col items-center">
+                    <p className="text-xs text-gray-500">Revenue</p>
+                    <p className="font-semibold text-green-600 text-base">
+                      {convertedTotals ? `${convertedTotals.base} ${rep.revenue.toLocaleString()}` : `USD ${rep.revenue.toLocaleString()}`}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -362,18 +360,21 @@ export const ManageTeamDashboard = () => {
         onOpenChange={setShowVisitsTable}
         dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
         title="Team Visits"
+        scope="team"
       />
       <DetailedLeadsTable 
         open={showLeadsTable} 
         onOpenChange={setShowLeadsTable}
         dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
         title="Team Leads"
+        scope="team"
       />
       <DetailedConversionsTable 
         open={showConversionsTable} 
         onOpenChange={setShowConversionsTable}
         dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
         title="Team Conversions"
+        scope="team"
       />
     </div>
   );

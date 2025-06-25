@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,16 +11,16 @@ interface DetailedConversionsTableProps {
   onOpenChange: (open: boolean) => void;
   dateFilter?: 'today' | 'week' | 'month';
   title?: string;
+  scope?: 'team' | 'user';
 }
 
-export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Conversions" }: DetailedConversionsTableProps) => {
+export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title = "Detailed Conversions", scope }: DetailedConversionsTableProps) => {
   const { user, userRole } = useAuth();
 
   const { data: conversions, isLoading } = useQuery({
-    queryKey: ['detailed-conversions', user?.id, userRole, dateFilter],
+    queryKey: ['detailed-conversions', scope === 'team' ? 'team' : user?.id, userRole, dateFilter],
     queryFn: async () => {
       if (!user) return [];
-      
       let query = supabase
         .from('conversions')
         .select(`
@@ -34,8 +33,8 @@ export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title
           profiles!inner(full_name, email)
         `);
 
-      // Filter by user if not manager/admin
-      if (!['manager', 'director', 'admin'].includes(userRole || '')) {
+      // Only filter by user if not team scope
+      if (scope !== 'team' && !['manager', 'director', 'admin'].includes(userRole || '')) {
         query = query.eq('rep_id', user.id);
       }
 
@@ -44,7 +43,7 @@ export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title
       if (dateFilter === 'today') {
         query = query.eq('conversion_date', format(today, 'yyyy-MM-dd'));
       } else if (dateFilter === 'week') {
-        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
         query = query.gte('conversion_date', format(weekStart, 'yyyy-MM-dd'));
       } else if (dateFilter === 'month') {
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
