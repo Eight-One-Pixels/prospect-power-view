@@ -9,14 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format, isToday, isPast, addDays, isFuture } from "date-fns";
+import { showNotificationToast, showSuccessToast, showErrorToast } from "./NotificationToast";
 
 export const NotificationCenter = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [lastNotificationCheck, setLastNotificationCheck] = useState(Date.now());
 
   // Get visits that require follow-up or are scheduled
-  const { data: notifications } = useQuery({
+  const { data: notifications, refetch } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -58,6 +60,36 @@ export const NotificationCenter = () => {
     refetchInterval: 300000, // Refetch every 5 minutes
   });
 
+  // System-wide notification checking
+  useEffect(() => {
+    if (!notifications || notifications.length === 0) return;
+
+    const newNotifications = notifications.filter(notification => {
+      const priority = getNotificationPriority(notification);
+      // Only show toast for overdue and today notifications
+      return priority === 'overdue' || priority === 'today';
+    });
+
+    // Show toast notifications for new high-priority items
+    if (newNotifications.length > 0 && Date.now() - lastNotificationCheck > 300000) {
+      newNotifications.slice(0, 3).forEach(notification => {
+        const priority = getNotificationPriority(notification);
+        showNotificationToast({
+          id: notification.id,
+          type: notification.type as 'follow_up' | 'scheduled',
+          company_name: notification.company_name,
+          contact_person: notification.contact_person,
+          visit_type: notification.visit_type,
+          date: notification.type === 'follow_up' 
+            ? format(new Date(notification.follow_up_date), 'MMM dd, yyyy')
+            : format(new Date(notification.visit_date), 'MMM dd, yyyy'),
+          priority: priority as 'overdue' | 'today' | 'upcoming'
+        });
+      });
+      setLastNotificationCheck(Date.now());
+    }
+  }, [notifications, lastNotificationCheck]);
+
   const markFollowUpComplete = useMutation({
     mutationFn: async (visitId: string) => {
       const { error } = await supabase
@@ -69,7 +101,10 @@ export const NotificationCenter = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success("Follow-up marked as completed");
+      showSuccessToast("Follow-up marked as completed");
+    },
+    onError: (error) => {
+      showErrorToast(`Failed to update follow-up: ${error.message}`);
     }
   });
 
@@ -84,7 +119,10 @@ export const NotificationCenter = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success("Visit marked as completed");
+      showSuccessToast("Visit marked as completed");
+    },
+    onError: (error) => {
+      showErrorToast(`Failed to update visit: ${error.message}`);
     }
   });
 
@@ -111,11 +149,11 @@ export const NotificationCenter = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Reminder email sent successfully");
+      showSuccessToast("Reminder email sent successfully");
     },
     onError: (error) => {
       const errorMessage = (error instanceof Error) ? error.message : String(error);
-      toast.error(`Failed to send reminder: ${errorMessage}`);
+      showErrorToast(`Failed to send reminder: ${errorMessage}`);
     }
   });
 
@@ -143,6 +181,10 @@ export const NotificationCenter = () => {
   };
 
   const notificationCount = notifications?.length || 0;
+  const highPriorityCount = notifications?.filter(n => {
+    const priority = getNotificationPriority(n);
+    return priority === 'overdue' || priority === 'today';
+  }).length || 0;
 
   return (
     <div className="relative">
@@ -150,32 +192,50 @@ export const NotificationCenter = () => {
         variant="ghost"
         size="sm"
         onClick={() => setShowNotifications(!showNotifications)}
-        className="relative"
+        className="relative hover:bg-gray-100 transition-colors"
       >
         <Bell className="h-5 w-5" />
-        {notificationCount > 0 && (
-          <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500">
+        {highPriorityCount > 0 && (
+          <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500 hover:bg-red-600 animate-pulse">
+            {highPriorityCount}
+          </Badge>
+        )}
+        {notificationCount > 0 && highPriorityCount === 0 && (
+          <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-blue-500">
             {notificationCount}
           </Badge>
         )}
       </Button>
 
       {showNotifications && (
-        <div className="absolute right-0 top-12 z-50 w-96">
-          <Card className="p-4 bg-white border shadow-lg">
+        <div className="absolute right-0 top-12 z-50 w-96 max-w-[calc(100vw-2rem)]">
+          <Card className="p-4 bg-white border shadow-xl rounded-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Notifications</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowNotifications(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <h3 className="font-semibold text-lg">Notifications</h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refetch()}
+                  className="text-xs"
+                >
+                  Refresh
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNotifications(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {notificationCount === 0 ? (
-              <p className="text-gray-500 text-sm">No notifications at this time</p>
+              <div className="text-center py-8">
+                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No notifications at this time</p>
+              </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {notifications?.map((notification) => {
@@ -185,11 +245,11 @@ export const NotificationCenter = () => {
                   return (
                     <div
                       key={notification.id}
-                      className={`p-3 rounded-lg border ${getPriorityColor(priority)}`}
+                      className={`p-3 rounded-lg border transition-all hover:shadow-sm ${getPriorityColor(priority)}`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-2">
                             {isFollowUp ? (
                               <Clock className="h-4 w-4" />
                             ) : (
@@ -198,50 +258,48 @@ export const NotificationCenter = () => {
                             <span className="font-medium text-sm">
                               {isFollowUp ? 'Follow-up Required' : 'Scheduled Visit'}
                             </span>
-                          </div>
-
-                          <div className="flex items-center gap-2 mb-1">
-                            <Building className="h-4 w-4" />
-                            <span className="font-medium text-sm">
-                              {notification.company_name}
-                            </span>
-                          </div>
-                          
-                          {notification.contact_person && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <User className="h-4 w-4" />
-                              <span className="text-sm">{notification.contact_person}</span>
-                            </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="h-4 w-4" />
-                            <span className="text-sm">
-                              {isFollowUp 
-                                ? `Follow-up: ${format(new Date(notification.follow_up_date), 'MMM dd, yyyy')}`
-                                : `Visit: ${format(new Date(notification.visit_date), 'MMM dd, yyyy')} ${notification.visit_time || ''}`
-                              }
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs ml-auto">
                               {priority.charAt(0).toUpperCase() + priority.slice(1)}
                             </Badge>
+                          </div>
+
+                          <div className="space-y-1 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Building className="h-3 w-3" />
+                              <span className="font-medium">{notification.company_name}</span>
+                            </div>
+                            
+                            {notification.contact_person && (
+                              <div className="flex items-center gap-2">
+                                <User className="h-3 w-3" />
+                                <span>{notification.contact_person}</span>
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-3 w-3" />
+                              <span>
+                                {isFollowUp 
+                                  ? `Follow-up: ${format(new Date(notification.follow_up_date), 'MMM dd, yyyy')}`
+                                  : `Visit: ${format(new Date(notification.visit_date), 'MMM dd, yyyy')} ${notification.visit_time || ''}`
+                                }
+                              </span>
+                            </div>
+
                             <Badge variant="secondary" className="text-xs">
                               {notification.visit_type.replace('_', ' ').toUpperCase()}
                             </Badge>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1 ml-2">
+                        <div className="flex flex-col gap-1 ml-3">
                           {isFollowUp ? (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => markFollowUpComplete.mutate(notification.id)}
                               disabled={markFollowUpComplete.isPending}
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 text-xs"
                             >
                               <CheckCircle className="h-3 w-3" />
                               Done
@@ -252,7 +310,7 @@ export const NotificationCenter = () => {
                               variant="outline"
                               onClick={() => markVisitComplete.mutate(notification.id)}
                               disabled={markVisitComplete.isPending}
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 text-xs"
                             >
                               <CheckCircle className="h-3 w-3" />
                               Complete
@@ -265,7 +323,7 @@ export const NotificationCenter = () => {
                               variant="outline"
                               onClick={() => sendReminderEmail.mutate(notification)}
                               disabled={sendReminderEmail.isPending}
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 text-xs"
                             >
                               <Mail className="h-3 w-3" />
                               Email
