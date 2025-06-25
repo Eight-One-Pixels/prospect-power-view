@@ -202,7 +202,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date">Visit Date</Label>
               <Popover>
@@ -247,7 +247,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="contactPerson">Contact Person</Label>
               <Input
@@ -269,7 +269,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="visitType">Visit Type</Label>
               <Select value={visitType} onValueChange={(value) => setVisitType(value as typeof visitType)} required>

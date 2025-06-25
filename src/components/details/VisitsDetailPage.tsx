@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -167,7 +166,7 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
 
       <Card className="p-6">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[600px] w-full text-xs sm:text-sm md:text-base">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>

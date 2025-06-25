@@ -258,7 +258,7 @@ export const LeadsDetailPage = ({ onBack }: LeadsDetailPageProps) => {
 
       <Card className="p-6">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[600px] w-full text-xs sm:text-sm md:text-base">
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>

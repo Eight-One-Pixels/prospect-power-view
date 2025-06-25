@@ -178,27 +178,28 @@ export const RepDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600">
+      <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+        <Button onClick={() => setLogVisitOpen(true)} className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 w-full sm:w-auto text-sm sm:text-base">
           <Plus className="h-4 w-4 mr-2" />
           Log Visit
         </Button>
-        <Button onClick={() => setAddLeadOpen(true)} variant="outline">
+        <Button onClick={() => setAddLeadOpen(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
           <Plus className="h-4 w-4 mr-2" />
           Add Lead
         </Button>
-        <Button onClick={() => setSetGoalsOpen(true)} variant="outline">
+        <Button onClick={() => setSetGoalsOpen(true)} variant="outline" className="w-full sm:w-auto text-sm sm:text-base">
           <Target className="h-4 w-4 mr-2" />
           Set Goals
         </Button>
       </div>
 
       {/* Period Selector */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
         <Button 
           variant={selectedPeriod === "day" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("day")}
+          className="w-full sm:w-auto"
         >
           Today
         </Button>
@@ -206,6 +207,7 @@ export const RepDashboard = () => {
           variant={selectedPeriod === "week" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("week")}
+          className="w-full sm:w-auto"
         >
           This Week
         </Button>
@@ -213,33 +215,34 @@ export const RepDashboard = () => {
           variant={selectedPeriod === "month" ? "default" : "outline"}
           size="sm"
           onClick={() => setSelectedPeriod("month")}
+          className="w-full sm:w-auto"
         >
           This Month
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
         key={index} 
-        className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
+        className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
         onClick={stat.onClick}
           >
         <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
           {isLoading ? (
             <span className="animate-pulse text-gray-400">...</span>
           ) : (
             stat.value
           )}
             </p>
-            <p className="text-xs text-gray-500">{stat.description}</p>
+            <p className="text-xs text-gray-500 truncate">{stat.description}</p>
           </div>
-          <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-            <stat.icon className="h-6 w-6 text-white" />
+          <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
+            <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
         </div>
           </Card>
@@ -248,16 +251,16 @@ export const RepDashboard = () => {
 
       {/* Goals Progress */}
       {isLoading ? (
-        <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+        <Card className="p-4 sm:p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
           <div className="space-y-4">
         {[1, 2].map((_, idx) => (
-          <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
-            <div>
+          <div key={idx} className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50 rounded-lg animate-pulse">
+            <div className="w-full sm:w-auto">
           <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
           <div className="h-3 w-40 bg-gray-200 rounded"></div>
             </div>
-            <div className="text-right">
+            <div className="text-right w-full sm:w-auto">
           <div className="h-5 w-16 bg-gray-200 rounded mb-1"></div>
           <div className="h-3 w-20 bg-gray-200 rounded"></div>
             </div>
@@ -267,20 +270,20 @@ export const RepDashboard = () => {
         </Card>
       ) : (
         stats?.goals && stats.goals.length > 0 && (
-          <Card className="p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
+          <Card className="p-4 sm:p-6 bg-white/70 backdrop-blur-sm border-0 shadow-md">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Current Goals</h3>
         <div className="space-y-4">
           {stats.goals.map((goal: any, index: number) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
-            <h4 className="font-semibold text-gray-900 capitalize">{goal.goal_type}</h4>
-            <p className="text-sm text-gray-600">{goal.description}</p>
+            <div key={index} className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="w-full sm:w-auto">
+            <h4 className="font-semibold text-gray-900 capitalize truncate">{goal.goal_type}</h4>
+            <p className="text-xs sm:text-sm text-gray-600 truncate">{goal.description}</p>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-gray-900">
+          <div className="text-right w-full sm:w-auto">
+            <p className="text-base sm:text-lg font-bold text-gray-900">
               {Number(goal.current_value)} / {Number(goal.target_value)}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
             </p>
           </div>

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,13 +93,12 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-full max-h-[90vh] sm:max-h-[80vh] p-2 sm:p-6 rounded-lg overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-2xl">{title}</DialogTitle>
           </DialogHeader>
-          
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[600px] w-full text-xs sm:text-sm md:text-base">
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
@@ -116,25 +114,25 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
               </TableHeader>
               <TableBody>
                 {visits?.map((visit) => (
-                  <TableRow key={visit.id}>
+                  <TableRow key={visit.id} className="hover:bg-gray-50">
                     <TableCell>{format(new Date(visit.visit_date), 'MMM dd, yyyy')}</TableCell>
-                    <TableCell className="font-medium">{visit.company_name}</TableCell>
-                    <TableCell>{visit.contact_person || 'N/A'}</TableCell>
+                    <TableCell className="font-medium max-w-[120px] truncate text-xs sm:text-sm">{visit.company_name}</TableCell>
+                    <TableCell className="max-w-[100px] truncate text-xs sm:text-sm">{visit.contact_person || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize">
+                      <Badge variant="outline" className="capitalize text-xs sm:text-sm">
                         {visit.visit_type.replace('_', ' ')}
                       </Badge>
                     </TableCell>
-                    <TableCell>{visit.duration_minutes ? `${visit.duration_minutes} min` : 'N/A'}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">{visit.duration_minutes ? `${visit.duration_minutes} min` : 'N/A'}</TableCell>
                     <TableCell>
-                      <div className="max-w-xs truncate">{visit.outcome || 'No outcome recorded'}</div>
+                      <div className="max-w-[120px] truncate text-xs sm:text-sm">{visit.outcome || 'No outcome recorded'}</div>
                     </TableCell>
-                    <TableCell>{visit.profiles?.full_name || visit.profiles?.email || 'Unknown'}</TableCell>
+                    <TableCell className="max-w-[100px] truncate text-xs sm:text-sm">{visit.profiles?.full_name || visit.profiles?.email || 'Unknown'}</TableCell>
                     <TableCell>
                       {visit.lead_generated ? (
-                        <Badge className="bg-green-100 text-green-800">Yes</Badge>
+                        <Badge className="bg-green-100 text-green-800 text-xs sm:text-sm">Yes</Badge>
                       ) : (
-                        <Badge variant="outline">No</Badge>
+                        <Badge variant="outline" className="text-xs sm:text-sm">No</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -142,6 +140,7 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
                         <Button
                           size="sm"
                           variant="outline"
+                          className="w-full sm:w-auto text-xs sm:text-sm"
                           onClick={() => handleConvertToLead(visit)}
                         >
                           Convert to Lead
@@ -155,7 +154,7 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
           </div>
 
           {visits?.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
               No visits found for the selected period.
             </div>
           )}

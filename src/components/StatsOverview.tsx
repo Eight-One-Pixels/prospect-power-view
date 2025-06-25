@@ -1,4 +1,3 @@
-
 import { TrendingUp, TrendingDown, Users, DollarSign, Target, Phone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -78,7 +77,7 @@ export const StatsOverview = ({ filters }: StatsOverviewProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 animate-fade-in">
       {stats.map((stat, index) => {
         const colorConfig = getColorClasses(stat.color);
         

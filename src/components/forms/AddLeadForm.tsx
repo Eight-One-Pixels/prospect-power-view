@@ -122,9 +122,9 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto w-full px-2 py-4 sm:p-6 rounded-lg">
         <DialogHeader>
-          <DialogTitle>Add New Lead</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Add New Lead</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -134,6 +134,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
@@ -144,6 +145,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               required
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
@@ -154,6 +156,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
@@ -164,6 +167,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               value={contactPhone}
               onChange={(e) => setContactPhone(e.target.value)}
               required
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
@@ -173,19 +177,20 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               id="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full text-sm sm:text-base">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border shadow-lg max-h-60">
                   {currencies.map((curr) => (
-                    <SelectItem key={curr.code} value={curr.code}>
+                    <SelectItem key={curr.code} value={curr.code} className="text-sm sm:text-base">
                       {curr.symbol} {curr.code} - {curr.name}
                     </SelectItem>
                   ))}
@@ -203,6 +208,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
                 value={estimatedRevenue}
                 onChange={(e) => setEstimatedRevenue(e.target.value)}
                 placeholder="0.00"
+                className="w-full text-sm sm:text-base"
               />
             </div>
           </div>
@@ -210,16 +216,16 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
           <div className="space-y-2">
             <Label htmlFor="source">Lead Source</Label>
             <Select value={source} onValueChange={setSource} required>
-              <SelectTrigger>
+              <SelectTrigger className="w-full text-sm sm:text-base">
                 <SelectValue placeholder="Select lead source" />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg">
-                <SelectItem value="referral">Referral</SelectItem>
-                <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="social_media">Social Media</SelectItem>
-                <SelectItem value="cold_call">Cold Call</SelectItem>
-                <SelectItem value="event">Event</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="referral" className="text-sm sm:text-base">Referral</SelectItem>
+                <SelectItem value="website" className="text-sm sm:text-base">Website</SelectItem>
+                <SelectItem value="social_media" className="text-sm sm:text-base">Social Media</SelectItem>
+                <SelectItem value="cold_call" className="text-sm sm:text-base">Cold Call</SelectItem>
+                <SelectItem value="event" className="text-sm sm:text-base">Event</SelectItem>
+                <SelectItem value="other" className="text-sm sm:text-base">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -227,17 +233,17 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full text-sm sm:text-base">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg">
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="qualified">Qualified</SelectItem>
-                <SelectItem value="proposal">Proposal Sent</SelectItem>
-                <SelectItem value="negotiation">Negotiation</SelectItem>
-                <SelectItem value="closed_won">Closed Won</SelectItem>
-                <SelectItem value="closed_lost">Closed Lost</SelectItem>
+                <SelectItem value="new" className="text-sm sm:text-base">New</SelectItem>
+                <SelectItem value="contacted" className="text-sm sm:text-base">Contacted</SelectItem>
+                <SelectItem value="qualified" className="text-sm sm:text-base">Qualified</SelectItem>
+                <SelectItem value="proposal" className="text-sm sm:text-base">Proposal Sent</SelectItem>
+                <SelectItem value="negotiation" className="text-sm sm:text-base">Negotiation</SelectItem>
+                <SelectItem value="closed_won" className="text-sm sm:text-base">Closed Won</SelectItem>
+                <SelectItem value="closed_lost" className="text-sm sm:text-base">Closed Lost</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -249,14 +255,15 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional notes..."
+              className="w-full text-sm sm:text-base min-h-[80px]"
             />
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? "Saving..." : "Add Lead"}
             </Button>
           </div>
