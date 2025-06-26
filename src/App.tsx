@@ -1,8 +1,10 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -13,70 +15,60 @@ import ManageUsers from "./pages/ManageUsers";
 import ManageTeam from "./pages/ManageTeam";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
-// import AdminVisitsTablePage from "./pages/AdminVisitsTablePage";
-// import TeamVisitsTablePage from "./pages/TeamVisitsTablePage";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              <Route path="/reports" element={
-                <ProtectedRoute>
-                  <Reports />
-                </ProtectedRoute>
-              } />
-              <Route path="/manage-users" element={
-                <ProtectedRoute requiredRoles={['admin', 'director']}>
-                  <ManageUsers />
-                </ProtectedRoute>
-              } />
-              <Route path="/manage-team" element={
-                <ProtectedRoute requiredRoles={['manager']}>
-                  <ManageTeam />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute requiredRoles={['admin', 'director']}>
-                  <Admin />
-                </ProtectedRoute>
-              } />
-              {/* <Route path="/admin/visits" element={
-                <ProtectedRoute requiredRoles={['admin', 'director']}>
-                  <AdminVisitsTablePage />
-                </ProtectedRoute>
-              } />
-              <Route path="/team/visits" element={
-                <ProtectedRoute requiredRoles={['manager']}>
-                  <TeamVisitsTablePage />
-                </ProtectedRoute>
-              } /> */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="light" storageKey="sales-app-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                } />
+                <Route path="/manage-users" element={
+                  <ProtectedRoute requiredRoles={['admin', 'director']}>
+                    <ManageUsers />
+                  </ProtectedRoute>
+                } />
+                <Route path="/manage-team" element={
+                  <ProtectedRoute requiredRoles={['manager']}>
+                    <ManageTeam />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute requiredRoles={['admin', 'director']}>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

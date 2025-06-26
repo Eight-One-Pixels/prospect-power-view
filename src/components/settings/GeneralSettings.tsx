@@ -10,17 +10,18 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
 
 export const GeneralSettings = () => {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
   
   const [currency, setCurrency] = useState("USD");
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
   const [timeFormat, setTimeFormat] = useState("12");
   const [language, setLanguage] = useState("en");
-  const [darkMode, setDarkMode] = useState(false);
   const [autoSave, setAutoSave] = useState(true);
   const [compactView, setCompactView] = useState(false);
   const [defaultCommissionRate, setDefaultCommissionRate] = useState("10");
@@ -63,9 +64,13 @@ export const GeneralSettings = () => {
     });
   };
 
+  const handleThemeChange = (checked: boolean) => {
+    setTheme(checked ? "dark" : "light");
+  };
+
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/70 backdrop-blur-sm">
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
         <h3 className="text-lg font-semibold mb-4">Currency & Regional Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -130,7 +135,7 @@ export const GeneralSettings = () => {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/70 backdrop-blur-sm">
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
         <h3 className="text-lg font-semibold mb-4">Sales Preferences</h3>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -145,20 +150,23 @@ export const GeneralSettings = () => {
               onChange={(e) => setDefaultCommissionRate(e.target.value)}
               className="max-w-xs"
             />
-            <p className="text-sm text-gray-600">Used as default when creating new conversions</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Used as default when creating new conversions</p>
           </div>
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/70 backdrop-blur-sm">
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
         <h3 className="text-lg font-semibold mb-4">Display & Interface</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Dark Mode</Label>
-              <p className="text-sm text-gray-600">Switch to dark theme</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Switch to dark theme</p>
             </div>
-            <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+            <Switch 
+              checked={theme === "dark"} 
+              onCheckedChange={handleThemeChange} 
+            />
           </div>
 
           <Separator />
@@ -166,7 +174,7 @@ export const GeneralSettings = () => {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Compact View</Label>
-              <p className="text-sm text-gray-600">Show more data in less space</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Show more data in less space</p>
             </div>
             <Switch checked={compactView} onCheckedChange={setCompactView} />
           </div>
@@ -176,7 +184,7 @@ export const GeneralSettings = () => {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Auto-save Forms</Label>
-              <p className="text-sm text-gray-600">Automatically save form changes</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Automatically save form changes</p>
             </div>
             <Switch checked={autoSave} onCheckedChange={setAutoSave} />
           </div>
