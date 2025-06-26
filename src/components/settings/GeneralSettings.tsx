@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -12,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
+import { Moon, Sun, Monitor } from "lucide-react";
 
 export const GeneralSettings = () => {
   const { user } = useAuth();
@@ -64,22 +64,29 @@ export const GeneralSettings = () => {
     });
   };
 
-  const handleThemeChange = (checked: boolean) => {
-    setTheme(checked ? "dark" : "light");
+  const getThemeIcon = () => {
+    switch (theme) {
+      case "dark":
+        return <Moon className="h-4 w-4" />;
+      case "light":
+        return <Sun className="h-4 w-4" />;
+      default:
+        return <Monitor className="h-4 w-4" />;
+    }
   };
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
-        <h3 className="text-lg font-semibold mb-4">Currency & Regional Settings</h3>
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-slate-800/90 dark:border-slate-700 transition-colors">
+        <h3 className="text-lg font-semibold mb-4 dark:text-slate-100">Currency & Regional Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="currency">Default Currency</Label>
+            <Label htmlFor="currency" className="dark:text-slate-200">Default Currency</Label>
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                 <SelectItem value="USD">USD - US Dollar</SelectItem>
                 <SelectItem value="EUR">EUR - Euro</SelectItem>
                 <SelectItem value="GBP">GBP - British Pound</SelectItem>
@@ -92,12 +99,12 @@ export const GeneralSettings = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateFormat">Date Format</Label>
+            <Label htmlFor="dateFormat" className="dark:text-slate-200">Date Format</Label>
             <Select value={dateFormat} onValueChange={setDateFormat}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                 <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
                 <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
                 <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
@@ -106,12 +113,12 @@ export const GeneralSettings = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeFormat">Time Format</Label>
+            <Label htmlFor="timeFormat" className="dark:text-slate-200">Time Format</Label>
             <Select value={timeFormat} onValueChange={setTimeFormat}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                 <SelectItem value="12">12-hour (AM/PM)</SelectItem>
                 <SelectItem value="24">24-hour</SelectItem>
               </SelectContent>
@@ -119,12 +126,12 @@ export const GeneralSettings = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor="language" className="dark:text-slate-200">Language</Label>
             <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-slate-700 dark:border-slate-600">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="es">Spanish</SelectItem>
                 <SelectItem value="fr">French</SelectItem>
@@ -135,11 +142,11 @@ export const GeneralSettings = () => {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
-        <h3 className="text-lg font-semibold mb-4">Sales Preferences</h3>
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-slate-800/90 dark:border-slate-700 transition-colors">
+        <h3 className="text-lg font-semibold mb-4 dark:text-slate-100">Sales Preferences</h3>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="defaultCommission">Default Commission Rate (%)</Label>
+            <Label htmlFor="defaultCommission" className="dark:text-slate-200">Default Commission Rate (%)</Label>
             <Input
               id="defaultCommission"
               type="number"
@@ -148,51 +155,87 @@ export const GeneralSettings = () => {
               step="0.1"
               value={defaultCommissionRate}
               onChange={(e) => setDefaultCommissionRate(e.target.value)}
-              className="max-w-xs"
+              className="max-w-xs dark:bg-slate-700 dark:border-slate-600"
             />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Used as default when creating new conversions</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">Used as default when creating new conversions</p>
           </div>
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-gray-800/70">
-        <h3 className="text-lg font-semibold mb-4">Display & Interface</h3>
+      <Card className="p-6 bg-white/70 backdrop-blur-sm dark:bg-slate-800/90 dark:border-slate-700 transition-colors">
+        <h3 className="text-lg font-semibold mb-4 dark:text-slate-100">Appearance & Interface</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Dark Mode</Label>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Switch to dark theme</p>
+              <Label className="dark:text-slate-200">Theme</Label>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Choose your preferred theme</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              {getThemeIcon()}
+              <Select value={theme} onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}>
+                <SelectTrigger className="w-32 dark:bg-slate-700 dark:border-slate-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                  <SelectItem value="light">
+                    <div className="flex items-center space-x-2">
+                      <Sun className="h-4 w-4" />
+                      <span>Light</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="dark">
+                    <div className="flex items-center space-x-2">
+                      <Moon className="h-4 w-4" />
+                      <span>Dark</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="system">
+                    <div className="flex items-center space-x-2">
+                      <Monitor className="h-4 w-4" />
+                      <span>System</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Separator className="dark:bg-slate-700" />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="dark:text-slate-200">Compact View</Label>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Show more data in less space</p>
             </div>
             <Switch 
-              checked={theme === "dark"} 
-              onCheckedChange={handleThemeChange} 
+              checked={compactView} 
+              onCheckedChange={setCompactView}
+              className="data-[state=checked]:bg-primary"
             />
           </div>
 
-          <Separator />
+          <Separator className="dark:bg-slate-700" />
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Compact View</Label>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Show more data in less space</p>
+              <Label className="dark:text-slate-200">Auto-save Forms</Label>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Automatically save form changes</p>
             </div>
-            <Switch checked={compactView} onCheckedChange={setCompactView} />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Auto-save Forms</Label>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Automatically save form changes</p>
-            </div>
-            <Switch checked={autoSave} onCheckedChange={setAutoSave} />
+            <Switch 
+              checked={autoSave} 
+              onCheckedChange={setAutoSave}
+              className="data-[state=checked]:bg-primary"
+            />
           </div>
         </div>
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={updateProfile.isPending}>
+        <Button 
+          onClick={handleSave} 
+          disabled={updateProfile.isPending}
+          className="dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+        >
           Save Settings
         </Button>
       </div>
