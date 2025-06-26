@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,6 +13,8 @@ import ManageUsers from "./pages/ManageUsers";
 import ManageTeam from "./pages/ManageTeam";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+// import AdminVisitsTablePage from "./pages/AdminVisitsTablePage";
+// import TeamVisitsTablePage from "./pages/TeamVisitsTablePage";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,16 @@ function App() {
                   <Admin />
                 </ProtectedRoute>
               } />
+              {/* <Route path="/admin/visits" element={
+                <ProtectedRoute requiredRoles={['admin', 'director']}>
+                  <AdminVisitsTablePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/team/visits" element={
+                <ProtectedRoute requiredRoles={['manager']}>
+                  <TeamVisitsTablePage />
+                </ProtectedRoute>
+              } /> */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

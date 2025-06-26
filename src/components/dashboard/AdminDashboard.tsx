@@ -5,21 +5,24 @@ import { Users, Building, TrendingUp, DollarSign, UserPlus, Activity } from "luc
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
-import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
 import { DetailedLeadsTable } from "../tables/DetailedLeadsTable";
 import { DetailedConversionsTable } from "../tables/DetailedConversionsTable";
+import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
+import { DetailedUsersTableDialog } from "../tables/DetailedUsersTable";
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [convertedStats, setConvertedStats] = useState<{ totalRevenue: number, baseCurrency: string } | null>(null);
-  const [showVisitsTable, setShowVisitsTable] = useState(false);
   const [showLeadsTable, setShowLeadsTable] = useState(false);
   const [showConversionsTable, setShowConversionsTable] = useState(false);
+  const [showVisitsTable, setShowVisitsTable] = useState(false);
+  const [showUsersTable, setShowUsersTable] = useState(false);
 
   // Fetch organization overview stats
   const { data: orgStats, isLoading } = useQuery({
@@ -160,7 +163,7 @@ export const AdminDashboard = () => {
       icon: Users,
       color: "blue",
       description: "Active users",
-      onClick: null
+      onClick: () => setShowUsersTable(true)
     },
     {
       title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Visits`,
@@ -266,25 +269,29 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
-            key={index} 
-            className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm ${
-              stat.onClick ? 'cursor-pointer' : ''
-            }`}
-            onClick={stat.onClick || undefined}
+        key={index} 
+        className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
+        onClick={stat.onClick}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
+          {isLoading ? (
+            <span className="animate-pulse text-gray-400">...</span>
+          ) : (
+            stat.value
+          )}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{stat.description}</p>
+          </div>
+          <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
+            <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          </div>
+        </div>
           </Card>
         ))}
       </div>
@@ -335,24 +342,32 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Detailed Tables */}
-      <DetailedVisitsTable 
-        open={showVisitsTable} 
-        onOpenChange={setShowVisitsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Organization Visits"
-      />
-      <DetailedLeadsTable 
-        open={showLeadsTable} 
-        onOpenChange={setShowLeadsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Organization Leads"
-      />
-      <DetailedConversionsTable 
-        open={showConversionsTable} 
-        onOpenChange={setShowConversionsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Organization Conversions"
-      />
+      {!isLoading && (
+        <>
+          <DetailedLeadsTable 
+            open={showLeadsTable} 
+            onOpenChange={setShowLeadsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            scope="team"
+            title="Organization Leads"
+          />
+          <DetailedConversionsTable 
+            open={showConversionsTable} 
+            onOpenChange={setShowConversionsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            scope="team"
+            title="Organization Conversions"
+          />
+          <DetailedVisitsTable 
+            open={showVisitsTable} 
+            onOpenChange={setShowVisitsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            title="Organization Visits"
+            scope="team"
+          />
+          <DetailedUsersTableDialog open={showUsersTable} onOpenChange={setShowUsersTable} />
+        </>
+      )}
     </div>
   );
 };

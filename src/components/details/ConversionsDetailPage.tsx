@@ -98,43 +98,58 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Conversions Card */}
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Conversions</p>
-              <p className="text-2xl font-bold">{conversions?.length || 0}</p>
-            </div>
+        <div className="p-2 bg-green-100 rounded-lg">
+          <TrendingUp className="h-5 w-5 text-green-600" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-600">Total Conversions</p>
+          {isLoading ? (
+            <div className="h-7 w-20 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-bold">{conversions?.length || 0}</p>
+          )}
+        </div>
           </div>
         </Card>
 
+        {/* Total Revenue Card */}
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <DollarSign className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold">
-                {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
-              </p>
-            </div>
+        <div className="p-2 bg-blue-100 rounded-lg">
+          <DollarSign className="h-5 w-5 text-blue-600" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-600">Total Revenue</p>
+          {isLoading || !convertedTotals ? (
+            <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-bold">
+          {convertedTotals.base} {convertedTotals.revenue.toLocaleString()}
+            </p>
+          )}
+        </div>
           </div>
         </Card>
 
+        {/* Total Commission Card */}
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Commission</p>
-              <p className="text-2xl font-bold">
-                {convertedTotals ? `${convertedTotals.base} ${convertedTotals.commission.toLocaleString()}` : '...'}
-              </p>
-            </div>
+        <div className="p-2 bg-purple-100 rounded-lg">
+          <TrendingUp className="h-5 w-5 text-purple-600" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-600">Total Commission</p>
+          {isLoading || !convertedTotals ? (
+            <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="text-2xl font-bold">
+          {convertedTotals.base} {convertedTotals.commission.toLocaleString()}
+            </p>
+          )}
+        </div>
           </div>
         </Card>
       </div>

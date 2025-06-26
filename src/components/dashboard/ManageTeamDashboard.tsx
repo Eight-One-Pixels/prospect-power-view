@@ -8,17 +8,19 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
-import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
 import { DetailedLeadsTable } from "../tables/DetailedLeadsTable";
 import { DetailedConversionsTable } from "../tables/DetailedConversionsTable";
+import { DetailedUsersTableDialog } from "../tables/DetailedUsersTable";
+import { DetailedVisitsTable } from "../tables/DetailedVisitsTable";
 
 export const ManageTeamDashboard = () => {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [convertedTotals, setConvertedTotals] = useState<{ revenue: number, base: string } | null>(null);
-  const [showVisitsTable, setShowVisitsTable] = useState(false);
   const [showLeadsTable, setShowLeadsTable] = useState(false);
   const [showConversionsTable, setShowConversionsTable] = useState(false);
+  const [showUsersTable, setShowUsersTable] = useState(false);
+  const [showVisitsTable, setShowVisitsTable] = useState(false);
 
   // Fetch team overview stats
   const { data: teamStats, isLoading } = useQuery({
@@ -99,14 +101,13 @@ export const ManageTeamDashboard = () => {
     queryKey: ['rep-performance', selectedPeriod],
     queryFn: async () => {
       const today = new Date();
-      let startDate: Date;
-      
-      if (selectedPeriod === "day") {
-        startDate = today;
-      } else if (selectedPeriod === "week") {
-        startDate = new Date(today.setDate(today.getDate() - 7));
+      const startDate = new Date();
+      if (selectedPeriod === "week") {
+        startDate.setDate(today.getDate() - 7);
+      } else if (selectedPeriod === "month") {
+        startDate.setMonth(today.getMonth() - 1);
       } else {
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate.setDate(today.getDate() - 1);
       }
 
       // Get all reps with their performance data
@@ -179,7 +180,7 @@ export const ManageTeamDashboard = () => {
       icon: Users,
       color: "blue",
       description: "Active representatives",
-      onClick: null
+      onClick: () => setShowUsersTable(true)
     },
     {
       title: `${selectedPeriod === 'day' ? 'Today' : selectedPeriod === 'week' ? 'This Week' : 'This Month'} Visits`,
@@ -226,7 +227,7 @@ export const ManageTeamDashboard = () => {
       .slice(0, 2);
   };
 
-  if (isLoading || isLoadingPerformance) {
+  if (isLoading) {
     return (
       <div className="space-y-8">
         <div className="animate-pulse">
@@ -277,25 +278,29 @@ export const ManageTeamDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
-            key={index} 
-            className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm ${
-              stat.onClick ? 'cursor-pointer' : ''
-            }`}
-            onClick={stat.onClick || undefined}
+        key={index} 
+        className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
+        onClick={stat.onClick}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
+          {isLoading ? (
+            <span className="animate-pulse text-gray-400">...</span>
+          ) : (
+            stat.value
+          )}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{stat.description}</p>
+          </div>
+          <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
+            <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          </div>
+        </div>
           </Card>
         ))}
       </div>
@@ -355,27 +360,32 @@ export const ManageTeamDashboard = () => {
       </Card>
 
       {/* Detailed Tables */}
-      <DetailedVisitsTable 
-        open={showVisitsTable} 
-        onOpenChange={setShowVisitsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Team Visits"
-        scope="team"
-      />
-      <DetailedLeadsTable 
-        open={showLeadsTable} 
-        onOpenChange={setShowLeadsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Team Leads"
-        scope="team"
-      />
-      <DetailedConversionsTable 
-        open={showConversionsTable} 
-        onOpenChange={setShowConversionsTable}
-        dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
-        title="Team Conversions"
-        scope="team"
-      />
+      {!isLoading && (
+        <>
+          <DetailedLeadsTable 
+            open={showLeadsTable} 
+            onOpenChange={setShowLeadsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            title="Team Leads"
+            scope="team"
+          />
+          <DetailedConversionsTable 
+            open={showConversionsTable} 
+            onOpenChange={setShowConversionsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            title="Team Conversions"
+            scope="team"
+          />
+          <DetailedVisitsTable 
+            open={showVisitsTable} 
+            onOpenChange={setShowVisitsTable}
+            dateFilter={selectedPeriod as 'today' | 'week' | 'month'}
+            title="Team Visits"
+            scope="team"
+          />
+          <DetailedUsersTableDialog open={showUsersTable} onOpenChange={setShowUsersTable} />
+        </>
+      )}
     </div>
   );
 };

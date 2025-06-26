@@ -13,7 +13,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { ArrowLeft, Clock, User, Building, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, User, Building, Edit, Trash2, Repeat } from "lucide-react";
+import { AddLeadForm } from "@/components/forms/AddLeadForm";
 
 interface VisitsDetailPageProps {
   onBack: () => void;
@@ -35,6 +36,9 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
   const [editLeadGenerated, setEditLeadGenerated] = useState(false);
   const [editFollowUpRequired, setEditFollowUpRequired] = useState(false);
   const [editFollowUpDate, setEditFollowUpDate] = useState("");
+  const [convertingVisit, setConvertingVisit] = useState<any>(null);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadInitialValues, setLeadInitialValues] = useState<any>(null);
 
   const { data: visits, isLoading } = useQuery({
     queryKey: ['user-visits', user?.id],
@@ -52,6 +56,44 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
     },
     enabled: !!user
   });
+
+  const handleConvertToLead = (visit: any) => {
+    setConvertingVisit(visit);
+    setLeadInitialValues({
+      company_name: visit.company_name,
+      contact_name: visit.contact_person,
+      contact_email: visit.contact_email,
+      contact_phone: visit.contact_phone,
+      address: visit.address,
+      notes: visit.notes,
+      source: visit.source,
+      estimated_revenue: visit.estimated_revenue ? String(visit.estimated_revenue) : "",
+      currency: visit.currency || "USD",
+      status: "new",
+      date: visit.visit_date ? new Date(visit.visit_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+    });
+    setShowLeadForm(true);
+  };
+
+  const handleLeadCreated = async () => {
+    if (convertingVisit) {
+      try {
+        const { error } = await supabase
+          .from('daily_visits')
+          .update({ lead_generated: true })
+          .eq('id', convertingVisit.id);
+
+        if (error) throw error;
+        toast.success("Visit converted to lead successfully!");
+        setConvertingVisit(null);
+        setShowLeadForm(false);
+        // Optionally refetch visits here
+      } catch (error) {
+        console.error('Error updating visit:', error);
+        toast.error("Failed to update visit status");
+      }
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (visitId: string) => {
@@ -254,6 +296,18 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
                         <Trash2 className="h-3 w-3" />
                         Delete
                       </Button>
+                      {!visit.lead_generated && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="w-full sm:w-auto text-xs sm:text-sm bg-black hover:bg-gray-900 text-white flex items-center gap-1"
+                          onClick={() => handleConvertToLead(visit)}
+                          title="Convert to Lead"
+                        >
+                          <Repeat className="h-4 w-4" />
+                          To Lead
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -393,6 +447,14 @@ export const VisitsDetailPage = ({ onBack }: VisitsDetailPageProps) => {
           </div>
         </DialogContent>
       </Dialog>
+      {convertingVisit && (
+        <AddLeadForm
+          open={showLeadForm}
+          onOpenChange={setShowLeadForm}
+          onLeadCreated={handleLeadCreated}
+          initialValues={leadInitialValues}
+        />
+      )}
     </div>
   );
 };

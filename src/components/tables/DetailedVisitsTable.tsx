@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useState } from "react";
 import { AddLeadForm } from "../forms/AddLeadForm";
 import { toast } from "sonner";
+import { Repeat } from "lucide-react";
 
 interface DetailedVisitsTableProps {
   open: boolean;
@@ -143,7 +144,8 @@ export const DetailedVisitsTable = ({ open, onOpenChange, dateFilter, title = "D
                           className="w-full sm:w-auto text-xs sm:text-sm"
                           onClick={() => handleConvertToLead(visit)}
                         >
-                          Convert to Lead
+                          <Repeat className="h-4 w-4" />
+                          To Lead
                         </Button>
                       )}
                     </TableCell>

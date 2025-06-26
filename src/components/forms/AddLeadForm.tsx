@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,19 @@ interface AddLeadFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLeadCreated?: () => void;
+  initialValues?: {
+    company_name?: string;
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    notes?: string;
+    address?: string;
+    source?: string;
+    status?: "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
+    currency?: string;
+    estimated_revenue?: string;
+    date?: string;
+  };
 }
 
 const currencies = [
@@ -39,19 +52,34 @@ const currencies = [
   { code: 'MWK', name: 'Malawi Kwacha', symbol: 'MK' }
 ];
 
-export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormProps) => {
+export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }: AddLeadFormProps) => {
   const { user } = useAuth();
-  const [companyName, setCompanyName] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [source, setSource] = useState("");
-  const [status, setStatus] = useState<"new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost">("new");
-  const [notes, setNotes] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [estimatedRevenue, setEstimatedRevenue] = useState("");
+  const [companyName, setCompanyName] = useState(initialValues?.company_name || "");
+  const [contactName, setContactName] = useState(initialValues?.contact_name || "");
+  const [contactEmail, setContactEmail] = useState(initialValues?.contact_email || "");
+  const [contactPhone, setContactPhone] = useState(initialValues?.contact_phone || "");
+  const [notes, setNotes] = useState(initialValues?.notes || "");
+  const [address, setAddress] = useState( initialValues?.address || "");
+  const [source, setSource] = useState(initialValues?.source || "");
+  const [status, setStatus] = useState<"new" | "contacted" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost">(initialValues?.status || "new");
+  const [currency, setCurrency] = useState(initialValues?.currency || "USD");
+  const [estimatedRevenue, setEstimatedRevenue] = useState(initialValues?.estimated_revenue || "");
+  const [date, setDate] = useState(initialValues?.date || "");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setCompanyName(initialValues?.company_name || "");
+    setContactName(initialValues?.contact_name || "");
+    setContactEmail(initialValues?.contact_email || "");
+    setContactPhone(initialValues?.contact_phone || "");
+    setNotes(initialValues?.notes || "");
+    setAddress(initialValues?.address || "");
+    setSource(initialValues?.source || "");
+    setStatus(initialValues?.status || "new");
+    setCurrency(initialValues?.currency || "USD");
+    setEstimatedRevenue(initialValues?.estimated_revenue || "");
+    setDate(initialValues?.date || new Date().toISOString().split("T")[0]);
+  }, [initialValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +87,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
 
     setLoading(true);
     try {
+      // Insert new lead
       const { error } = await supabase
         .from('leads')
         .insert({
@@ -72,36 +101,43 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
           status,
           notes,
           currency,
-          estimated_revenue: estimatedRevenue ? parseFloat(estimatedRevenue) : null
+          estimated_revenue: estimatedRevenue ? parseFloat(estimatedRevenue) : null,
+          created_at: date || null
         });
 
       if (error) throw error;
 
-      // Increment current_value for 'leads' goal
+      // Check for an existing goal
       const today = new Date();
-      const { data: goalData, error: goalError } = await supabase
+      const todayStr = today.toISOString().split('T')[0];
+
+      const { data: goals, error: goalError } = await supabase
         .from('goals')
         .select('current_value')
         .eq('user_id', user.id)
         .eq('goal_type', 'leads')
-        .lte('period_start', today.toISOString().split('T')[0])
-        .gte('period_end', today.toISOString().split('T')[0])
-        .single();
+        .lte('period_start', todayStr)
+        .gte('period_end', todayStr);
 
       if (goalError) throw goalError;
 
-      await supabase
-        .from('goals')
-        .update({ current_value: (goalData?.current_value ?? 0) + 1 })
-        .eq('user_id', user.id)
-        .eq('goal_type', 'leads')
-        .lte('period_start', today.toISOString().split('T')[0])
-        .gte('period_end', today.toISOString().split('T')[0]);
+      // Only increment if there's a matching goal
+      if (goals && goals.length > 0) {
+        const currentValue = goals[0].current_value || 0;
+        await supabase
+          .from('goals')
+          .update({ current_value: currentValue + 1 })
+          .eq('user_id', user.id)
+          .eq('goal_type', 'leads')
+          .lte('period_start', todayStr)
+          .gte('period_end', todayStr);
+      }
 
-      toast.success("Lead added successfully!");
+      toast.success('Lead added successfully!');
       onOpenChange(false);
       if (onLeadCreated) onLeadCreated();
-      // Reset form
+
+      // Reset the form
       setCompanyName("");
       setContactName("");
       setContactEmail("");
@@ -112,13 +148,15 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
       setNotes("");
       setCurrency("USD");
       setEstimatedRevenue("");
+      setDate("");
     } catch (error) {
       console.error('Error adding lead:', error);
-      toast.error("Failed to add lead");
+      toast.error('Failed to add lead');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -156,6 +194,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
+              required
               className="w-full text-sm sm:text-base"
             />
           </div>
@@ -207,6 +246,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
                 min="0"
                 value={estimatedRevenue}
                 onChange={(e) => setEstimatedRevenue(e.target.value)}
+                required
                 placeholder="0.00"
                 className="w-full text-sm sm:text-base"
               />
@@ -256,6 +296,18 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated }: AddLeadFormPr
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional notes..."
               className="w-full text-sm sm:text-base min-h-[80px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className="w-full text-sm sm:text-base"
             />
           </div>
 

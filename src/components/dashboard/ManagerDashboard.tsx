@@ -225,29 +225,29 @@ export const ManagerDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
-            key={index} 
-            className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer"
-            onClick={stat.onClick}
+        key={index} 
+        className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
+        onClick={stat.onClick}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">
-                  {isLoading ? (
-                    <span className="animate-pulse text-gray-400">...</span>
-                  ) : (
-                    stat.value
-                  )}
-                </p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
-              </div>
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
-            </div>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
+          {isLoading ? (
+            <span className="animate-pulse text-gray-400">...</span>
+          ) : (
+            stat.value
+          )}
+            </p>
+            <p className="text-xs text-gray-500 truncate">{stat.description}</p>
+          </div>
+          <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
+            <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          </div>
+        </div>
           </Card>
         ))}
       </div>
