@@ -7,8 +7,8 @@ import { DeductionsSettings } from "@/components/settings/DeductionsSettings";
 import { useAuth } from "@/hooks/useAuth";
 
 const Settings = () => {
-  const { user, profile } = useAuth();
-  const isAdminOrDirector = profile?.role === 'admin' || profile?.role === 'director';
+  const { user, userRole } = useAuth();
+  const isAdminOrDirector = userRole === 'admin' || userRole === 'director';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">

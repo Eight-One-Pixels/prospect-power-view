@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,8 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
   const [showAddClient, setShowAddClient] = useState(false);
   const [newStatusValue, setNewStatusValue] = useState("");
   const [newSourceValue, setNewSourceValue] = useState("");
+  const [showCustomStatus, setShowCustomStatus] = useState(false);
+  const [showCustomSource, setShowCustomSource] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Fetch status options
@@ -136,6 +139,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
       queryClient.invalidateQueries({ queryKey: ['lead-status-options'] });
       setStatus(data.value as any);
       setNewStatusValue("");
+      setShowCustomStatus(false);
       toast.success('Status option added');
     }
   });
@@ -160,6 +164,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
       queryClient.invalidateQueries({ queryKey: ['lead-source-options'] });
       setSource(data.value);
       setNewSourceValue("");
+      setShowCustomSource(false);
       toast.success('Source option added');
     }
   });
@@ -288,6 +293,10 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
     setEstimatedRevenue("");
     setLeadDate(new Date().toISOString().split("T")[0]);
     setSelectedClient(null);
+    setShowCustomStatus(false);
+    setShowCustomSource(false);
+    setNewStatusValue("");
+    setNewSourceValue("");
   };
 
   return (
@@ -413,7 +422,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="source">Lead Source</Label>
-                {newSourceValue && (
+                {showCustomSource && newSourceValue && (
                   <Button
                     type="button"
                     size="sm"
@@ -430,9 +439,11 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
                 value={source} 
                 onValueChange={(value) => {
                   if (value === "custom") {
+                    setShowCustomSource(true);
                     setNewSourceValue("");
                   } else {
                     setSource(value);
+                    setShowCustomSource(false);
                   }
                 }}
                 required
@@ -451,7 +462,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {source === "custom" && (
+              {showCustomSource && (
                 <Input
                   placeholder="Enter new source name"
                   value={newSourceValue}
@@ -464,7 +475,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="status">Status</Label>
-                {newStatusValue && (
+                {showCustomStatus && newStatusValue && (
                   <Button
                     type="button"
                     size="sm"
@@ -481,9 +492,11 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
                 value={status} 
                 onValueChange={(value) => {
                   if (value === "custom") {
+                    setShowCustomStatus(true);
                     setNewStatusValue("");
                   } else {
                     setStatus(value as typeof status);
+                    setShowCustomStatus(false);
                   }
                 }}
               >
@@ -501,7 +514,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {status === "custom" && (
+              {showCustomStatus && (
                 <Input
                   placeholder="Enter new status name"
                   value={newStatusValue}
