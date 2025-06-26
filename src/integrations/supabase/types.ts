@@ -9,13 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          company_name: string
+          contact_person: string | null
+          created_at: string | null
+          created_by: string
+          email: string | null
+          id: string
+          industry: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_name: string
+          contact_person?: string | null
+          created_at?: string | null
+          created_by: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string | null
+          created_by?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       conversions: {
         Row: {
           commission_amount: number | null
           commission_rate: number | null
+          commissionable_amount: number | null
           conversion_date: string
           created_at: string | null
           currency: string | null
+          deductions_applied: Json | null
           id: string
           lead_id: string
           notes: string | null
@@ -25,9 +69,11 @@ export type Database = {
         Insert: {
           commission_amount?: number | null
           commission_rate?: number | null
+          commissionable_amount?: number | null
           conversion_date?: string
           created_at?: string | null
           currency?: string | null
+          deductions_applied?: Json | null
           id?: string
           lead_id: string
           notes?: string | null
@@ -37,9 +83,11 @@ export type Database = {
         Update: {
           commission_amount?: number | null
           commission_rate?: number | null
+          commissionable_amount?: number | null
           conversion_date?: string
           created_at?: string | null
           currency?: string | null
+          deductions_applied?: Json | null
           id?: string
           lead_id?: string
           notes?: string | null
@@ -152,6 +200,39 @@ export type Database = {
           },
         ]
       }
+      deductions: {
+        Row: {
+          applies_before_commission: boolean | null
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          label: string
+          percentage: number
+          updated_at: string | null
+        }
+        Insert: {
+          applies_before_commission?: boolean | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          label: string
+          percentage: number
+          updated_at?: string | null
+        }
+        Update: {
+          applies_before_commission?: boolean | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          percentage?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string | null
@@ -194,6 +275,60 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_source_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      lead_status_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           address: string | null
@@ -207,6 +342,7 @@ export type Database = {
           estimated_revenue: number | null
           id: string
           industry: string | null
+          lead_date: string | null
           next_follow_up: string | null
           notes: string | null
           source: string
@@ -225,6 +361,7 @@ export type Database = {
           estimated_revenue?: number | null
           id?: string
           industry?: string | null
+          lead_date?: string | null
           next_follow_up?: string | null
           notes?: string | null
           source: string
@@ -243,6 +380,7 @@ export type Database = {
           estimated_revenue?: number | null
           id?: string
           industry?: string | null
+          lead_date?: string | null
           next_follow_up?: string | null
           notes?: string | null
           source?: string
@@ -408,6 +546,19 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_commission_with_deductions: {
+        Args: {
+          revenue_amount: number
+          commission_rate: number
+          currency?: string
+        }
+        Returns: {
+          commissionable_amount: number
+          total_deductions: number
+          final_commission: number
+          deductions_applied: Json
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
