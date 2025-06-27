@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery as useReactQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface ConvertLeadFormProps {
@@ -35,23 +34,56 @@ export const ConvertLeadForm = ({
   const [loading, setLoading] = useState(false);
   const [commissionData, setCommissionData] = useState<any>(null);
 
-  // Fetch commission calculation when revenue or rate changes
-  const { data: calculationResult, refetch: recalculate } = useQuery({
-    queryKey: ['commission-calculation', revenueAmount, commissionRate],
+  // Fetch deduction settings (global or for this user/team)
+  const { data: deductionSettings, isLoading: deductionsLoading } = useReactQuery({
+    queryKey: ['deduction-settings'],
     queryFn: async () => {
-      if (!revenueAmount || !commissionRate) return null;
-      
+      const { data, error } = await supabase
+        .from('deductions')
+        .select('*'); // fetch all deductions as array
+      if (error) throw error;
+      return data;
+    },
+    enabled: open
+  });
+
+  // Fetch commission calculation when revenue or rate changes
+  const { data: calculationResult, refetch: recalculate } = useReactQuery({
+    queryKey: ['commission-calculation', revenueAmount, commissionRate, deductionSettings],
+    queryFn: async () => {
+      if (!revenueAmount || !commissionRate || !Number.isFinite(parseFloat(revenueAmount)) || !Number.isFinite(parseFloat(commissionRate))) return null;
+      // Pass deduction settings if your RPC supports it, else just display
       const { data, error } = await supabase
         .rpc('calculate_commission_with_deductions', {
           revenue_amount: parseFloat(revenueAmount),
           commission_rate: parseFloat(commissionRate),
-          currency: leadData?.currency || 'USD'
+          currency: leadData?.currency || 'USD',
+          deduction_settings: deductionSettings ?? null
         });
-      
       if (error) throw error;
       return data?.[0] || null;
     },
-    enabled: !!revenueAmount && !!commissionRate && parseFloat(revenueAmount) > 0
+    enabled: !!revenueAmount && !!commissionRate && Number.isFinite(parseFloat(revenueAmount)) && Number.isFinite(parseFloat(commissionRate)) && parseFloat(revenueAmount) > 0 && !!deductionSettings
+  });
+
+  // Fetch user's default commission rate
+  useReactQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('default_commission_rate')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id && open,
+    onSuccess: (data) => {
+      if (data?.default_commission_rate !== undefined && data?.default_commission_rate !== null) {
+        setCommissionRate(String(data.default_commission_rate));
+      }
+    }
   });
 
   useEffect(() => {
@@ -134,6 +166,25 @@ export const ConvertLeadForm = ({
           </Card>
         )}
 
+        
+        {deductionSettings && Array.isArray(deductionSettings) && (
+          <Card className="p-4 bg-yellow-50 mb-2">
+            <h4 className="font-medium mb-2">Deductions</h4>
+            {deductionSettings.length > 0 ? (
+              <ul className="list-disc ml-5 text-sm">
+                {deductionSettings.map((d: any, idx: number) => (
+                  <li key={idx} className="mb-1">
+                    <span className="font-semibold">{d.label}</span>: {d.percentage}%
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="text-gray-500 text-sm">No deductions configured.</span>
+            )}
+          </Card>
+        )}
+        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -174,15 +225,17 @@ export const ConvertLeadForm = ({
                   <span className="font-medium">{leadData?.currency || 'USD'} {parseFloat(revenueAmount).toFixed(2)}</span>
                 </div>
                 
-                {commissionData.deductions_applied && JSON.parse(commissionData.deductions_applied).length > 0 && (
+                {commissionData.deductions_applied && commissionData.deductions_applied.length > 0 && (
                   <>
                     <div className="border-t pt-2">
                       <span className="font-medium text-gray-700">Deductions Applied:</span>
                     </div>
-                    {JSON.parse(commissionData.deductions_applied).map((deduction: any, index: number) => (
+                    {commissionData.deductions_applied.map((deduction: any, index: number) => (
                       <div key={index} className="flex justify-between text-gray-600 ml-2">
                         <span>{deduction.label} ({deduction.percentage}%):</span>
-                        <span>-{leadData?.currency || 'USD'} {parseFloat(deduction.amount).toFixed(2)}</span>
+                        <span>
+                          -{leadData?.currency || 'USD'} {Number.isFinite(Number(deduction.amount)) ? Number(deduction.amount).toFixed(2) : '0.00'}
+                        </span>
                       </div>
                     ))}
                   </>

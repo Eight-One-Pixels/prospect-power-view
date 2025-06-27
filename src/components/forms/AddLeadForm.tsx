@@ -313,7 +313,7 @@ export const AddLeadForm = ({ open, onOpenChange, onLeadCreated, initialValues }
                 value={companyName}
                 onValueChange={setCompanyName}
                 onClientSelect={handleClientSelect}
-                placeholder="Search existing clients or add new..."
+                placeholder="Double click to search existing clients or add new..."
               />
               {selectedClient && (
                 <div className="flex items-center gap-2">

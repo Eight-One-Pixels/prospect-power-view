@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft, TrendingUp, Edit, Trash2 } from "lucide-react";
+import { ConvertLeadForm } from "@/components/forms/ConvertLeadForm";
 
 interface LeadsDetailPageProps {
   onBack: () => void;
@@ -490,71 +491,18 @@ export const LeadsDetailPage = ({ onBack }: LeadsDetailPageProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Convert Dialog - keep existing code */}
-      <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Convert Lead to Sale</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Company: {selectedLead?.company_name}</Label>
-              <p className="text-sm text-gray-600">Contact: {selectedLead?.contact_name}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="revenueAmount">Actual Revenue Amount</Label>
-              <Input
-                id="revenueAmount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={revenueAmount}
-                onChange={(e) => setRevenueAmount(e.target.value)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="commissionRate">Commission Rate (%)</Label>
-              <Input
-                id="commissionRate"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                value={commissionRate}
-                onChange={(e) => setCommissionRate(e.target.value)}
-                placeholder="5.00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="conversionNotes">Notes</Label>
-              <Textarea
-                id="conversionNotes"
-                value={conversionNotes}
-                onChange={(e) => setConversionNotes(e.target.value)}
-                placeholder="Any additional notes about this conversion..."
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setConvertDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleConvert} disabled={converting || !revenueAmount}>
-                {converting ? "Converting..." : "Convert to Sale"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Convert Dialog - use ConvertLeadForm for consistency and deduction logic */}
+      <ConvertLeadForm
+        open={convertDialogOpen}
+        onOpenChange={setConvertDialogOpen}
+        leadId={selectedLead?.id}
+        leadData={selectedLead}
+        onConversionComplete={() => {
+          setConvertDialogOpen(false);
+          setSelectedLead(null);
+          refetch();
+        }}
+      />
     </div>
   );
 };

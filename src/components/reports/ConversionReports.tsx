@@ -186,6 +186,7 @@ export const ConversionReports = () => {
                   <TableHead>Contact</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead>Revenue</TableHead>
+                  <TableHead>Commissionable Amount</TableHead>
                   <TableHead>Commission</TableHead>
                   <TableHead>Notes</TableHead>
                 </TableRow>
@@ -201,11 +202,15 @@ export const ConversionReports = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
                         <span className="font-semibold text-green-600">
                           {conversion.currency} {Number(conversion.revenue_amount).toLocaleString()}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold text-blue-600">
+                        {conversion.currency} {Number(conversion.commissionable_amount || conversion.revenue_amount).toLocaleString()}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {conversion.commission_amount ? (

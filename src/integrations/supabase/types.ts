@@ -409,6 +409,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           department: string | null
+          default_commission_rate: number | null
           email: string | null
           full_name: string | null
           hire_date: string | null
@@ -425,6 +426,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           department?: string | null
+          default_commission_rate?: number | null
           email?: string | null
           full_name?: string | null
           hire_date?: string | null
@@ -441,6 +443,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           department?: string | null
+          default_commission_rate?: number | null
           email?: string | null
           full_name?: string | null
           hire_date?: string | null
@@ -551,6 +554,7 @@ export type Database = {
           revenue_amount: number
           commission_rate: number
           currency?: string
+          deduction_settings?: Json
         }
         Returns: {
           commissionable_amount: number
@@ -605,7 +609,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

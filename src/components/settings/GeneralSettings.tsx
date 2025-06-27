@@ -27,18 +27,24 @@ export const GeneralSettings = () => {
   const [defaultCommissionRate, setDefaultCommissionRate] = useState("10");
 
   // Fetch user preferences
-  const { data: profile } = useQuery({
+  useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('preferred_currency')
+        .select('preferred_currency, default_commission_rate')
         .eq('id', user.id)
         .single();
       return data;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    onSuccess: (data) => {
+      if (data?.default_commission_rate !== undefined && data?.default_commission_rate !== null) {
+        setDefaultCommissionRate(String(data.default_commission_rate));
+      }
+      if (data?.preferred_currency) setCurrency(data.preferred_currency);
+    }
   });
 
   const updateProfile = useMutation({
@@ -60,7 +66,8 @@ export const GeneralSettings = () => {
 
   const handleSave = () => {
     updateProfile.mutate({
-      preferred_currency: currency
+      preferred_currency: currency,
+      default_commission_rate: parseFloat(defaultCommissionRate)
     });
   };
 

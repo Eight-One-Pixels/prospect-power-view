@@ -86,6 +86,20 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
   const totalRevenue = conversions?.reduce((sum, conv) => sum + Number(conv.revenue_amount), 0) || 0;
   const totalCommission = conversions?.reduce((sum, conv) => sum + (Number(conv.commission_amount) || 0), 0) || 0;
 
+  // Map conversions to include parsed deductions
+  const conversionsWithDeductions = conversions?.map((conv) => ({
+    ...conv,
+    deductions: (() => {
+      try {
+        if (Array.isArray(conv.deductions_applied)) return conv.deductions_applied;
+        if (typeof conv.deductions_applied === "string") return JSON.parse(conv.deductions_applied);
+        return [];
+      } catch {
+        return [];
+      }
+    })(),
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -164,12 +178,13 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
                 <TableHead>Contact</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Revenue</TableHead>
+                <TableHead>Commissionable Amount</TableHead>
                 <TableHead>Commission</TableHead>
                 <TableHead>Notes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {conversions?.map((conversion) => (
+              {conversionsWithDeductions?.map((conversion) => (
                 <TableRow key={conversion.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -190,10 +205,21 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {/* <DollarSign className="h-4 w-4 text-green-600" /> */}
                       <span className="font-semibold text-green-600">
                         {conversion.currency} {Number(conversion.revenue_amount).toLocaleString()}
                       </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-blue-700">
+                        {conversion.currency} {Number(conversion.commissionable_amount ?? conversion.revenue_amount).toLocaleString()}
+                      </span>
+                      {conversion.deductions && Array.isArray(conversion.deductions) && conversion.deductions.length > 0 && (
+                        <span className="text-xs text-gray-500 mt-1">
+                          Deductions: {conversion.deductions.map((d) => `${d.label || d.type}: ${conversion.currency} ${Number(d.amount).toLocaleString()}`).join(', ')}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -223,7 +249,7 @@ export const ConversionsDetailPage = ({ onBack }: ConversionsDetailPageProps) =>
           </Table>
         </div>
 
-        {conversions?.length === 0 && (
+        {conversionsWithDeductions?.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <p>No conversions recorded yet.</p>
           </div>

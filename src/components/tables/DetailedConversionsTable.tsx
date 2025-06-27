@@ -77,6 +77,7 @@ export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title
                 <TableHead>Contact</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Revenue</TableHead>
+                <TableHead>Commissionable Amount</TableHead>
                 <TableHead>Commission</TableHead>
                 <TableHead>Sales Rep</TableHead>
                 <TableHead>Notes</TableHead>
@@ -94,6 +95,11 @@ export const DetailedConversionsTable = ({ open, onOpenChange, dateFilter, title
                   <TableCell>
                     <span className="font-semibold text-green-600">
                       {conversion.currency || 'USD'} {Number(conversion.revenue_amount).toLocaleString()}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-semibold text-blue-600">
+                      {conversion.currency || 'USD'} {Number(conversion.commissionable_amount ?? conversion.revenue_amount).toLocaleString()}
                     </span>
                   </TableCell>
                   <TableCell>

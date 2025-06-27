@@ -88,13 +88,33 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
           notes: `Generated from visit on ${format(visitDateTime, 'yyyy-MM-dd')}. Original notes: ${notes}`
         };
 
+        const clientData = {
+          created_by: user.id,
+          company_name: companyName,
+          contact_person: contactPerson || null,
+          email: contactEmail || null,
+          phone: '', // Will need to be filled later
+          address: '', // Will need to be filled later
+          industry: '', // Will need to be filled later
+          notes: `Lead generated from visit on ${format(visitDateTime, 'yyyy-MM-dd')}. Original notes: ${notes}`
+        };
+
         const { error: leadError } = await supabase
           .from('leads')
           .insert(leadData);
 
+        const { error: clientError } = await supabase
+          .from('clients')
+          .insert(clientData);
+
         if (leadError) {
           console.warn('Failed to create lead:', leadError);
           toast.warning("Visit saved but failed to create lead automatically");
+        }
+
+        if (clientError) {
+          console.warn('Failed to create client:', clientError);
+          toast.warning("Visit saved but failed to create client automatically");
         }
       }
 
@@ -147,7 +167,7 @@ export const LogVisitForm = ({ open, onOpenChange }: LogVisitFormProps) => {
       }
 
       const successMessage = leadGenerated 
-        ? `${isScheduled ? "Visit scheduled" : "Visit logged"} and lead created successfully!`
+        ? `${isScheduled ? "Visit scheduled" : "Visit logged"} and lead/client created successfully!`
         : `${isScheduled ? "Visit scheduled" : "Visit logged"} successfully!`;
       
       toast.success(successMessage);
