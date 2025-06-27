@@ -222,26 +222,26 @@ export const RepDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <Card 
-        key={index} 
-        className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
-        onClick={stat.onClick}
+            key={index} 
+            className="p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 border-0 shadow-md bg-white/70 backdrop-blur-sm cursor-pointer min-w-0"
+            onClick={stat.onClick}
           >
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
-            <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
-          {isLoading ? (
-            <span className="animate-pulse text-gray-400">...</span>
-          ) : (
-            stat.value
-          )}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{stat.description}</p>
-          </div>
-          <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}>
-            <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-          </div>
-        </div>
+            <div className="flex items-start justify-between">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 truncate">{stat.title}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 truncate">
+                  {isLoading ? (
+                    <span className="animate-pulse text-gray-400">...</span>
+                  ) : (
+                    stat.value
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{stat.description}</p>
+              </div>
+              <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-r ${getColorClasses(stat.color)}`}> 
+                <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+              </div>
+            </div>
           </Card>
         ))}
       </div>
@@ -272,18 +272,20 @@ export const RepDashboard = () => {
         <div className="space-y-4">
           {stats.goals.map((goal: any, index: number) => (
             <div key={index} className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="w-full sm:w-auto">
-            <h4 className="font-semibold text-gray-900 capitalize truncate">{goal.goal_type}</h4>
-            <p className="text-xs sm:text-sm text-gray-600 truncate">{goal.description}</p>
-          </div>
-          <div className="text-right w-full sm:w-auto">
-            <p className="text-base sm:text-lg font-bold text-gray-900">
-              {Number(goal.current_value)} / {Number(goal.target_value)}
-            </p>
-            <p className="text-xs sm:text-sm text-gray-600">
-              {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
-            </p>
-          </div>
+              <div className="w-full sm:w-auto">
+                <h4 className="font-semibold text-gray-900 capitalize truncate">{goal.goal_type}</h4>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{goal.description}</p>
+              </div>
+              <div className="text-right w-full sm:w-auto">
+                <p className="text-base sm:text-lg font-bold text-gray-900">
+                  {goal.goal_type === 'revenue' && goal.currency
+                    ? `${goal.currency} ${Number(goal.current_value).toLocaleString()} / ${Number(goal.target_value).toLocaleString()}`
+                    : `${Number(goal.current_value)} / ${Number(goal.target_value)}`}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
+                </p>
+              </div>
             </div>
           ))}
         </div>

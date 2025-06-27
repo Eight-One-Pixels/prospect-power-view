@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 import { useQuery } from "@tanstack/react-query";
@@ -310,7 +309,12 @@ export const RevenueReports = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Revenue']} />
+                <Tooltip formatter={(value: any, name: string, props: any) => {
+                  // Show value with correct currency symbol
+                  const entry = props && props.payload;
+                  const currency = entry && entry.currency ? entry.currency : '';
+                  return [`${currency} ${Number(value).toLocaleString()}`, 'Revenue'];
+                }} />
               </PieChart>
             </ResponsiveContainer>
           )}

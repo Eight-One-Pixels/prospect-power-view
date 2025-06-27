@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,24 @@ export const SetGoalsForm = ({ open, onOpenChange, goal, onGoalUpdated }: SetGoa
   const { user } = useAuth();
   const [goalType, setGoalType] = useState(goal?.goal_type || "");
   const [targetValue, setTargetValue] = useState(goal?.target_value?.toString() || "");
-  const [currency, setCurrency] = useState(goal?.currency || "USD");
+  const [currency, setCurrency] = useState(goal?.currency || "");
   const [periodStart, setPeriodStart] = useState<Date>(goal?.period_start ? new Date(goal.period_start) : new Date());
   const [periodEnd, setPeriodEnd] = useState<Date>(goal?.period_end ? new Date(goal.period_end) : new Date());
   const [description, setDescription] = useState(goal?.description || "");
   const [loading, setLoading] = useState(false);
+
+  // Get user's base currency for revenue goals
+  const [baseCurrency, setBaseCurrency] = useState<string>("");
+  useEffect(() => {
+    async function fetchBaseCurrency() {
+      if (user) {
+        const { base } = await import("@/lib/currency").then(m => m.getUserCurrencyContext(user));
+        setBaseCurrency(base);
+        if (!currency) setCurrency(base);
+      }
+    }
+    if (goalType === 'revenue') fetchBaseCurrency();
+  }, [user, goalType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,30 +146,35 @@ export const SetGoalsForm = ({ open, onOpenChange, goal, onGoalUpdated }: SetGoa
 
           <div className="space-y-2">
             <Label htmlFor="targetValue">Target Value</Label>
-            <Input
-              id="targetValue"
-              type="number"
-              value={targetValue}
-              onChange={(e) => setTargetValue(e.target.value)}
-              required
-            />
+            <div className="flex items-center gap-2">
+              {goalType === 'revenue' && baseCurrency && (
+                <span className="font-semibold">{baseCurrency}</span>
+              )}
+              <Input
+                id="targetValue"
+                type="number"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          {goalType === 'revenue' && (
+          {/* Only show currency selector if user wants to override base currency */}
+          {goalType === 'revenue' && baseCurrency && (
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
+              <Select value={currency} onValueChange={setCurrency} disabled>
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border shadow-lg max-h-60 overflow-y-auto">
-                  {currencies.map((curr) => (
-                    <SelectItem key={curr.code} value={curr.code}>
-                      {curr.code} - {curr.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={baseCurrency} value={baseCurrency}>
+                    {baseCurrency}
+                  </SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-gray-500">Revenue goals are set in your base currency.</p>
             </div>
           )}
 

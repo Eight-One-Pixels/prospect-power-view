@@ -286,8 +286,10 @@ export const ManagerDashboard = () => {
                     <p className="text-sm text-gray-600">{goal.description}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">
-                      {Number(goal.current_value)} / {Number(goal.target_value)}
+                    <p className="text-base sm:text-lg font-bold text-gray-900">
+                      {goal.goal_type === 'revenue' && goal.currency
+                        ? `${goal.currency} ${Number(goal.current_value).toLocaleString()} / ${Number(goal.target_value).toLocaleString()}`
+                        : `${Number(goal.current_value)} / ${Number(goal.target_value)}`}
                     </p>
                     <p className="text-sm text-gray-600">
                       {Math.round((Number(goal.current_value) / Number(goal.target_value)) * 100)}% Complete
