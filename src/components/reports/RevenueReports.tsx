@@ -36,7 +36,8 @@ export const RevenueReports = () => {
             source
           ),
           profiles!inner(full_name, email)
-        `);
+        `)
+        .eq('status', 'approved'); // Only include approved conversions for revenue reports
 
       // Filter by user if not manager/admin
       if (!['manager', 'director', 'admin'].includes(userRole || '')) {
@@ -249,23 +250,35 @@ export const RevenueReports = () => {
           <div className="text-2xl font-bold">
             {convertedTotals ? `${convertedTotals.base} ${convertedTotals.revenue.toLocaleString()}` : '...'}
           </div>
-          <div className="text-sm text-gray-600">Total Revenue</div>
+          <div className="text-sm text-gray-600">Approved Revenue</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Only approved conversions counted
+          </div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold">
             {convertedTotals ? `${convertedTotals.base} ${convertedTotals.commission.toLocaleString()}` : '...'}
           </div>
-          <div className="text-sm text-gray-600">Total Commission</div>
+          <div className="text-sm text-gray-600">Approved Commission</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Only approved conversions counted
+          </div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold">
             {convertedTotals ? `${convertedTotals.avgCommissionRate.toFixed(1)}%` : '...'}
           </div>
           <div className="text-sm text-gray-600">Avg Commission Rate</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Based on approved conversions
+          </div>
         </Card>
         <Card className="p-4">
           <div className="text-2xl font-bold">{revenueData?.conversions?.length || 0}</div>
-          <div className="text-sm text-gray-600">Total Conversions</div>
+          <div className="text-sm text-gray-600">Approved Conversions</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Only approved conversions shown
+          </div>
         </Card>
       </div>
 
