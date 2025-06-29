@@ -13,6 +13,8 @@ import { DollarSign, CheckCircle, XCircle, Clock, AlertTriangle, Edit3 } from "l
 import { getUserCurrencyContext, convertCurrency } from "@/lib/currency";
 import { useConversionActions, useUserRole } from "@/hooks/useConversions";
 import { AmendConversionForm } from "@/components/forms/AmendConversionForm";
+import { exportBrandedCSV, exportTableToPDF, escapeCSV, formatCurrency } from "@/lib/exportUtils";
+import { REPORT_TITLES } from "@/lib/brandingConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConversionStatus = Database["public"]["Enums"]["conversion_status"];
@@ -129,30 +131,34 @@ export const ConversionReports = () => {
       return;
     }
 
-    const csvContent = [
-      ['Date', 'Company', 'Contact', 'Source', 'Revenue', 'Currency', 'Commission', 'Status', 'Rep', 'Notes'].join(','),
-      ...conversions.map(conv => [
-        format(new Date(conv.conversion_date), 'yyyy-MM-dd'),
-        `"${conv.leads?.company_name || 'N/A'}"`,
-        `"${conv.leads?.contact_name || 'N/A'}"`,
-        conv.leads?.source || 'N/A',
-        conv.revenue_amount,
-        conv.currency || 'USD',
-        conv.commission_amount || 0,
-        conv.status || 'pending',
-        `"${conv.profiles?.full_name || conv.profiles?.email || 'Unknown'}"`,
-        `"${conv.notes || ''}"`.replace(/"/g, '""')
-      ].join(','))
-    ].join('\n');
+    const csvData = conversions.map(conv => [
+      format(new Date(conv.conversion_date), 'yyyy-MM-dd'),
+      escapeCSV(conv.leads?.company_name || 'N/A'),
+      escapeCSV(conv.leads?.contact_name || 'N/A'),
+      escapeCSV(conv.leads?.source || 'N/A'),
+      formatCurrency(conv.revenue_amount, conv.currency),
+      conv.commission_amount || 0,
+      escapeCSV(conv.status || 'pending'),
+      escapeCSV(conv.profiles?.full_name || conv.profiles?.email || 'Unknown'),
+      escapeCSV(conv.notes || '')
+    ].join(','));
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `conversion-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Report exported successfully!");
+    exportBrandedCSV(
+      csvData,
+      ['Date', 'Company', 'Contact', 'Source', 'Revenue', 'Commission', 'Status', 'Rep', 'Notes'],
+      'conversion-report',
+      REPORT_TITLES.conversions,
+      dateRange
+    );
+  };
+
+  const exportReportPDF = async () => {
+    await exportTableToPDF(
+      'conversions-table',
+      'conversion-report',
+      REPORT_TITLES.conversions,
+      dateRange
+    );
   };
 
   const getStatusIcon = (status: ConversionStatus) => {
@@ -207,6 +213,7 @@ export const ConversionReports = () => {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         onExport={exportReport}
+        onExportPDF={exportReportPDF}
         exportLabel="Export Conversion Report"
       />
 
@@ -253,7 +260,7 @@ export const ConversionReports = () => {
         {isLoading ? (
           <div className="flex items-center justify-center h-64">Loading...</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" id="conversions-table">
             <Table>
               <TableHeader>
                 <TableRow>
