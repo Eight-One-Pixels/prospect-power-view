@@ -18,11 +18,11 @@ const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: Protect
       if (requireAuth && !user) {
         navigate("/auth");
       } else if (!requireAuth && user) {
-        navigate("/");
+        navigate("/dashboard");
       } else if (user && requiredRoles && requiredRoles.length > 0) {
         // Check if user has required role
         if (!userRole || !requiredRoles.includes(userRole)) {
-          navigate("/"); // Redirect to main dashboard if no permission
+          navigate("/dashboard"); // Redirect to main dashboard if no permission
         }
       }
     }

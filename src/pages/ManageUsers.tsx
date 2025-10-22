@@ -37,7 +37,7 @@ const ManageUsers = () => {
   // Redirect if not admin
   useEffect(() => {
     if (userRole && userRole !== 'admin') {
-      navigate('/');
+      navigate('/dashboard');
       toast.error("Access denied. Admin privileges required.");
     }
   }, [userRole, navigate]);
@@ -150,7 +150,7 @@ const ManageUsers = () => {
       <Navigation />
       <div className="container mx-auto px-2 sm:px-4 md:px-6 py-4 md:py-8">
         <div className="mb-6 md:mb-8">
-          <p className="text-sm text-gray-500 cursor-pointer" onClick={() => navigate("/")}>← Back to Dashboard</p>
+          <p className="text-sm text-gray-500 cursor-pointer" onClick={() => navigate("/dashboard")}>← Back to Dashboard</p>
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2 mt-2 md:mt-0">
             Manage Users
           </h1>

@@ -20,6 +20,9 @@ const Auth = () => {
   const [failedEmail, setFailedEmail] = useState("");
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [validatingCode, setValidatingCode] = useState(false);
+  const [codeValid, setCodeValid] = useState<boolean | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,11 +30,64 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     };
     checkUser();
+
+    // Check for invite code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("invite");
+    if (code) {
+      setInviteCode(code);
+      validateInviteCode(code);
+    }
   }, [navigate]);
+
+  const validateInviteCode = async (code: string) => {
+    if (!code) {
+      setCodeValid(null);
+      return;
+    }
+
+    setValidatingCode(true);
+    try {
+      // Check if invite code exists and is valid
+      const { data, error } = await (supabase.from as any)("invite_codes")
+        .select("*")
+        .eq("code", code)
+        .eq("status", "active")
+        .single();
+
+      if (error || !data) {
+        setCodeValid(false);
+        toast.error("Invalid or expired invite code");
+        return;
+      }
+
+      // Check if code is expired
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        setCodeValid(false);
+        toast.error("This invite code has expired");
+        return;
+      }
+
+      // Check if code has reached max uses
+      if (data.current_uses >= data.max_uses) {
+        setCodeValid(false);
+        toast.error("This invite code has already been used");
+        return;
+      }
+
+      setCodeValid(true);
+      toast.success("Valid invite code! You can create your account.");
+    } catch (error: any) {
+      console.error("Error validating invite code:", error);
+      setCodeValid(false);
+    } finally {
+      setValidatingCode(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +117,7 @@ const Auth = () => {
 
       if (data.user) {
         toast.success("Successfully signed in!");
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
@@ -77,7 +133,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOtp({
         email: failedEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
@@ -119,21 +175,53 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate invite code if provided
+      if (inviteCode) {
+        if (!codeValid) {
+          toast.error("Please enter a valid invite code");
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            invite_code: inviteCode || null,
           },
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (error) throw error;
 
       if (data.user) {
-        toast.success("Account created successfully! Please check your email to verify your account.");
+        // Use the invite code if provided
+        if (inviteCode && codeValid) {
+          try {
+            const { data: useCodeResult, error: useCodeError } = await (supabase.rpc as any)(
+              "use_invite_code",
+              {
+                code_to_use: inviteCode,
+                user_id: data.user.id,
+              }
+            );
+
+            if (useCodeError) {
+              console.error("Error using invite code:", useCodeError);
+              toast.error("Account created but invite code could not be redeemed");
+            } else if (useCodeResult?.success) {
+              toast.success("Account created successfully! Invite code redeemed. Please check your email to verify your account.");
+            }
+          } catch (codeError) {
+            console.error("Error redeeming invite code:", codeError);
+          }
+        } else {
+          toast.success("Account created successfully! Please check your email to verify your account.");
+        }
         // Don't redirect immediately, let them verify email first
       }
     } catch (error: any) {
@@ -321,6 +409,49 @@ const Auth = () => {
                       )}
                     </Button>
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="inviteCode">Invite Code (Optional)</Label>
+                  <div className="relative">
+                    <Input
+                      id="inviteCode"
+                      type="text"
+                      value={inviteCode}
+                      onChange={(e) => {
+                        const code = e.target.value.toUpperCase();
+                        setInviteCode(code);
+                        if (code) {
+                          validateInviteCode(code);
+                        } else {
+                          setCodeValid(null);
+                        }
+                      }}
+                      placeholder="Enter invite code (e.g., INV-XXXXX)"
+                      className={
+                        codeValid === true
+                          ? "border-green-500 focus-visible:ring-green-500"
+                          : codeValid === false
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                    />
+                    {validatingCode && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-indigo-600 rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
+                  {codeValid === true && (
+                    <p className="text-xs text-green-600 mt-1">✓ Valid invite code</p>
+                  )}
+                  {codeValid === false && (
+                    <p className="text-xs text-red-600 mt-1">✗ Invalid or expired invite code</p>
+                  )}
+                  {!inviteCode && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Have an invite code? Enter it to get early access
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="submit"

@@ -99,4 +99,4 @@ This project is licensed under the MIT License — feel free to adapt it to your
 ## 🙌 Contributing
 If you'd like to help improve this project — whether it's adding features, improving UI, or translating to other languages — feel free to open a pull request or issue.
 
-Built in Collaboration with [Lovable.dev](https://lovable.dev) by [Eight One Pixels](https://81px.vercel.app)
+Built in Collaboration with [Lovable.dev](https://lovable.dev) by [eiteone](https://81px.vercel.app)

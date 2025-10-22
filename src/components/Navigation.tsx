@@ -91,8 +91,8 @@ export const Navigation = () => {
             {/* Desktop Menus */}
             <div className="hidden lg:flex flex-row items-center gap-1 ml-4">
               <Link
-                to="/"
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                to="/dashboard"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
               >
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </Link>
@@ -129,14 +129,22 @@ export const Navigation = () => {
               >
                 <FileText className="h-4 w-4" /> Reports
               </Link>
-              {/* {isAdminOrDirector && (
-                <Link
-                  to="/admin"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-                >
-                  <Shield className="h-4 w-4" /> Admin
-                </Link>
-              )} */}
+              {isAdminOrDirector && (
+                <>
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                  >
+                    <Shield className="h-4 w-4" /> Admin
+                  </Link>
+                  <Link
+                    to="/waitlist-admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                  >
+                    <Users className="h-4 w-4" /> Waitlist
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -179,8 +187,8 @@ export const Navigation = () => {
           {mobileMenuOpen && (
             <div className="flex lg:hidden flex-col w-full space-y-1 bg-white/95 rounded shadow-lg absolute left-0 top-16 z-50 p-4 animate-fade-in">
               <Link
-                to="/"
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                to="/dashboard"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
@@ -223,13 +231,22 @@ export const Navigation = () => {
                 <FileText className="h-4 w-4" /> Reports
               </Link>
               {isAdminOrDirector && (
-                <Link
-                  to="/admin"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Shield className="h-4 w-4" /> Admin
-                </Link>
+                <>
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Shield className="h-4 w-4" /> Admin
+                  </Link>
+                  <Link
+                    to="/waitlist-admin"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Users className="h-4 w-4" /> Waitlist
+                  </Link>
+                </>
               )}
             </div>
           )}

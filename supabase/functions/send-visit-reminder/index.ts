@@ -1,119 +1,115 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
-
-interface VisitReminderRequest {
-  to: string;
-  visitData: {
-    company_name: string;
-    contact_person: string;
-    visit_type: string;
-    visit_datetime: string;
-    rep_name: string;
-    notes?: string;
-  };
-}
-
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+const handler = async (req)=>{
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
-
   try {
-    const { to, visitData }: VisitReminderRequest = await req.json();
-    
-    console.log('Sending visit reminder to:', to);
-    console.log('Visit data:', visitData);
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const { to, visitData } = await req.json();
+    console.log("Sending visit reminder to:", to);
+    console.log("Visit data:", visitData);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // For now, we'll log the email and store it in a notifications table
-    // In production, you would integrate with an email service like Resend
-    const { error: insertError } = await supabase
-      .from('notifications')
-      .insert({
-        type: 'visit_reminder',
-        recipient_email: to,
-        title: `Upcoming Meeting - ${visitData.company_name}`,
-        message: `Meeting with ${visitData.contact_person} at ${visitData.company_name} scheduled for ${new Date(visitData.visit_datetime).toLocaleString()}`,
-        metadata: visitData,
-        sent_at: new Date().toISOString()
-      });
-
+    // Insert notification log into Supabase
+    const { error: insertError } = await supabase.from("notifications").insert({
+      type: "visit_reminder",
+      recipient_email: to,
+      title: `Upcoming Meeting - ${visitData.company_name}`,
+      message: `Meeting with ${visitData.contact_person} at ${visitData.company_name} scheduled for ${new Date(visitData.visit_datetime).toLocaleString()}`,
+      metadata: visitData,
+      sent_at: new Date().toISOString()
+    });
     if (insertError) {
-      console.error('Error storing notification:', insertError);
+      console.error("Error storing notification:", JSON.stringify(insertError, null, 2));
     }
+    // Prepare email content
+    const emailHtml = `
+      <div style="font-family: 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #ffffff; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <header style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 24px;">
+          <h1 style="color: #111827; font-size: 20px; margin: 0;">Alo—Sales | Meeting Reminder</h1>
+        </header>
 
-    const emailContent = {
-      to,
-      subject: `Upcoming Meeting - ${visitData.company_name}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #333; border-bottom: 2px solid #4F46E5; padding-bottom: 10px;">Meeting Reminder</h2>
-          <p>Dear ${visitData.contact_person || 'Valued Contact'},</p>
-          
-          <p>This is a reminder about our upcoming meeting:</p>
-          
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4F46E5;">
-            <p><strong>Company:</strong> ${visitData.company_name}</p>
-            <p><strong>Meeting Type:</strong> ${visitData.visit_type.replace('_', ' ').toUpperCase()}</p>
-            <p><strong>Date & Time:</strong> ${new Date(visitData.visit_datetime).toLocaleString()}</p>
-            <p><strong>Sales Representative:</strong> ${visitData.rep_name}</p>
-            ${visitData.notes ? `<p><strong>Notes:</strong> ${visitData.notes}</p>` : ''}
+        <section>
+          <p style="font-size: 16px; margin-bottom: 16px;">
+            Hi ${visitData.contact_person || "there"},
+          </p>
+
+          <p style="font-size: 15px; margin-bottom: 16px;">
+            This is a friendly reminder about your upcoming meeting with us.
+          </p>
+
+          <div style="background-color: #f9fafb; border-left: 4px solid #4F46E5; padding: 16px; border-radius: 6px; margin-bottom: 24px;">
+            <p style="margin: 0; font-size: 15px;"><strong>Company:</strong> ${visitData.company_name}</p>
+            <p style="margin: 0; font-size: 15px;"><strong>Meeting Type:</strong> ${visitData.visit_type.replace("_", " ").toUpperCase()}</p>
+            <p style="margin: 0; font-size: 15px;"><strong>Date & Time:</strong> ${new Date(visitData.visit_datetime).toLocaleString()}</p>
+            <p style="margin: 0; font-size: 15px;"><strong>Sales Rep:</strong> ${visitData.rep_name}</p>
+            ${visitData.notes ? `<p style="margin: 0; font-size: 15px;"><strong>Notes:</strong> ${visitData.notes}</p>` : ""}
           </div>
-          
-          <p>Please let us know if you need to reschedule or have any questions.</p>
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 14px;">Best regards,<br>
-            ${visitData.rep_name}<br>
-            Alo—Sales Team</p>
-          </div>
-        </div>
-      `
-    };
 
-    console.log('Email notification prepared and logged');
+          <p style="font-size: 15px; margin-bottom: 24px;">
+            If you need to reschedule or have any questions, please reply to this email or contact your sales representative directly.
+          </p>
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Visit reminder sent successfully',
-        emailContent 
-      }), 
-      {
-        status: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        }
+          <p style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">Best regards,</p>
+          <p style="font-size: 14px; color: #6b7280; margin: 0;">${visitData.rep_name}<br>Alo—Sales Team</p>
+        </section>
+
+        <footer style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af;">
+          <p style="margin: 0;">This email was sent by Alo—Sales, ${visitData.rep_name}. For any inquiries, contact support@alo.com</p>
+        </footer>
+      </div>
+    `;
+    // Send the email using Resend
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: "Alo Sales <onboarding@resend.dev>",
+        to,
+        subject: `Upcoming Meeting - ${visitData.company_name}`,
+        html: emailHtml
+      })
+    });
+    const emailResult = await emailResponse.json();
+    if (!emailResponse.ok) {
+      console.error("Resend email failed:", JSON.stringify(emailResult, null, 2));
+      throw new Error("Email sending failed");
+    }
+    console.log("Email sent via Resend:", emailResult);
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Visit reminder sent successfully",
+      emailResult
+    }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
       }
-    );
-
+    });
   } catch (error) {
-    console.error('Error in send-visit-reminder function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        success: false 
-      }),
-      {
-        status: 500,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        }
+    console.error("Error in send-visit-reminder function:", error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message || "Unknown error"
+    }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
       }
-    );
+    });
   }
 };
-
 serve(handler);

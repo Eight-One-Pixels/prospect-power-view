@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -16,6 +17,7 @@ import ManageTeam from "./pages/ManageTeam";
 import Admin from "./pages/Admin";
 import { ConversionsPage } from "./pages/Conversions";
 import { Clients } from "./pages/Clients";
+import WaitlistAdmin from "./pages/WaitlistAdmin";
 import NotFound from "./pages/NotFound";
 import { SpeedInsights } from "@vercel/speed-insights/react"
 
@@ -31,8 +33,9 @@ function App() {
             <Toaster />
             <BrowserRouter>
               <Routes>
+                <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/" element={
+                <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Index />
                   </ProtectedRoute>
@@ -75,6 +78,11 @@ function App() {
                 <Route path="/admin" element={
                   <ProtectedRoute requiredRoles={['admin', 'director']}>
                     <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/waitlist-admin" element={
+                  <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
+                    <WaitlistAdmin />
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />

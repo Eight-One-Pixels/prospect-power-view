@@ -96,6 +96,23 @@
     @apply bg-background text-foreground transition-colors duration-300;
   }
 
+  /* Smooth scroll for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Add scroll padding to account for sticky header */
+  html {
+    scroll-padding-top: 80px;
+  }
+
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   /* Dark mode specific overrides for better aesthetics */
   .dark {
     /* Better gradient backgrounds for dark mode */

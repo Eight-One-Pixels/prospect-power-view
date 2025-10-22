@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       clients: {
@@ -302,6 +307,56 @@ export type Database = {
         }
         Relationships: []
       }
+      invite_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          created_by_waitlist: string | null
+          current_uses: number | null
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          status: string | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          created_by_waitlist?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          status?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          created_by_waitlist?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          status?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_codes_created_by_waitlist_fkey"
+            columns: ["created_by_waitlist"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_source_options: {
         Row: {
           created_at: string | null
@@ -373,7 +428,7 @@ export type Database = {
           next_follow_up: string | null
           notes: string | null
           source: string
-          status: Database["public"]["Enums"]["lead_status"] | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
@@ -392,7 +447,7 @@ export type Database = {
           next_follow_up?: string | null
           notes?: string | null
           source: string
-          status?: Database["public"]["Enums"]["lead_status"] | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -411,7 +466,7 @@ export type Database = {
           next_follow_up?: string | null
           notes?: string | null
           source?: string
-          status?: Database["public"]["Enums"]["lead_status"] | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -435,8 +490,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
-          department: string | null
           default_commission_rate: number | null
+          department: string | null
           email: string | null
           full_name: string | null
           hire_date: string | null
@@ -452,8 +507,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          department?: string | null
           default_commission_rate?: number | null
+          department?: string | null
           email?: string | null
           full_name?: string | null
           hire_date?: string | null
@@ -469,8 +524,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
-          department?: string | null
           default_commission_rate?: number | null
+          department?: string | null
           email?: string | null
           full_name?: string | null
           hire_date?: string | null
@@ -507,6 +562,75 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referee_id: string | null
+          referrer_id: string | null
+          reward_points: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referrer_id?: string | null
+          reward_points?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referee_id?: string | null
+          referrer_id?: string | null
+          reward_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_invites: {
+        Row: {
+          id: string
+          invites_accepted: number | null
+          invites_remaining: number | null
+          invites_sent: number | null
+          invites_total: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          invites_accepted?: number | null
+          invites_remaining?: number | null
+          invites_sent?: number | null
+          invites_total?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          invites_accepted?: number | null
+          invites_remaining?: number | null
+          invites_sent?: number | null
+          invites_total?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -530,6 +654,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waitlist: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          invited_at: string | null
+          metadata: Json | null
+          position: number | null
+          referral_code: string
+          referral_count: number | null
+          referred_by: string | null
+          signed_up_at: string | null
+          status: string | null
+          team_size: string | null
+          use_case: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          invited_at?: string | null
+          metadata?: Json | null
+          position?: number | null
+          referral_code: string
+          referral_count?: number | null
+          referred_by?: string | null
+          signed_up_at?: string | null
+          status?: string | null
+          team_size?: string | null
+          use_case?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          invited_at?: string | null
+          metadata?: Json | null
+          position?: number | null
+          referral_code?: string
+          referral_count?: number | null
+          referred_by?: string | null
+          signed_up_at?: string | null
+          status?: string | null
+          team_size?: string | null
+          use_case?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -577,29 +763,70 @@ export type Database = {
     }
     Functions: {
       calculate_commission_with_deductions: {
-        Args: {
-          revenue_amount: number
-          commission_rate: number
-          currency?: string
-          deduction_settings?: Json
-        }
+        Args:
+          | {
+              commission_rate: number
+              currency: string
+              deduction_settings?: Json
+              revenue_amount: number
+            }
+          | {
+              commission_rate: number
+              currency?: string
+              revenue_amount: number
+            }
         Returns: {
           commissionable_amount: number
-          total_deductions: number
-          final_commission: number
           deductions_applied: Json
+          final_commission: number
         }[]
+      }
+      calculate_waitlist_position: {
+        Args: { waitlist_id: string }
+        Returns: number
+      }
+      create_user_invite_codes: {
+        Args: { num_codes?: number; user_id: string }
+        Returns: undefined
+      }
+      generate_invite_code: {
+        Args: { user_id: string }
+        Returns: string
+      }
+      generate_referral_code: {
+        Args: { user_email: string }
+        Returns: string
+      }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_waitlist_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       is_manager_or_above: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      process_referral: {
+        Args: { referee_id: string; referrer_code: string }
+        Returns: Json
+      }
+      update_all_waitlist_positions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      use_invite_code: {
+        Args: { code_to_use: string; user_id: string }
+        Returns: Json
       }
     }
     Enums: {
@@ -626,21 +853,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -658,14 +889,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -681,14 +914,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -704,14 +939,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -719,14 +956,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
