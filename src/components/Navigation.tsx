@@ -17,31 +17,14 @@ import {
   UserCog,
   TrendingUp
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import icon from "@/assets/icon.png";
 
 export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: pendingCount } = usePendingConversionsCount();
-
-  // Get user profile for avatar
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id
-  });
 
   const handleSignOut = async () => {
     try {
@@ -67,6 +50,9 @@ export const Navigation = () => {
   const isManager = userRole === 'manager';
   const isAdminOrDirector = ['admin', 'director'].includes(userRole || '');
   const canViewConversions = ['manager', 'director', 'admin'].includes(userRole || '');
+  
+  // Special access for waitlist - only alo@eiteone.org can see it
+  const canViewWaitlist = profile?.email === 'alo@eiteone.org';
 
   return (
     <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-40 w-full">
@@ -137,13 +123,15 @@ export const Navigation = () => {
                   >
                     <Shield className="h-4 w-4" /> Admin
                   </Link>
-                  <Link
-                    to="/waitlist-admin"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-                  >
-                    <Users className="h-4 w-4" /> Waitlist
-                  </Link>
                 </>
+              )}
+              {canViewWaitlist && (
+                <Link
+                  to="/waitlist-admin"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                >
+                  <Users className="h-4 w-4" /> Waitlist
+                </Link>
               )}
             </div>
           </div>
@@ -239,14 +227,16 @@ export const Navigation = () => {
                   >
                     <Shield className="h-4 w-4" /> Admin
                   </Link>
-                  <Link
-                    to="/waitlist-admin"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Users className="h-4 w-4" /> Waitlist
-                  </Link>
                 </>
+              )}
+              {canViewWaitlist && (
+                <Link
+                  to="/waitlist-admin"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/waitlist-admin') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Users className="h-4 w-4" /> Waitlist
+                </Link>
               )}
             </div>
           )}

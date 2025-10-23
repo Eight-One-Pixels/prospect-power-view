@@ -7,10 +7,11 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requiredRoles?: string[];
+  requiredEmail?: string;
 }
 
-const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: ProtectedRouteProps) => {
-  const { user, userRole, loading } = useAuth();
+const ProtectedRoute = ({ children, requireAuth = true, requiredRoles, requiredEmail }: ProtectedRouteProps) => {
+  const { user, userRole, profile, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,6 +20,11 @@ const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: Protect
         navigate("/auth");
       } else if (!requireAuth && user) {
         navigate("/dashboard");
+      } else if (user && requiredEmail) {
+        // Check if user has required email
+        if (!profile || profile.email !== requiredEmail) {
+          navigate("/dashboard"); // Redirect to main dashboard if no permission
+        }
       } else if (user && requiredRoles && requiredRoles.length > 0) {
         // Check if user has required role
         if (!userRole || !requiredRoles.includes(userRole)) {
@@ -26,7 +32,7 @@ const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: Protect
         }
       }
     }
-  }, [user, userRole, loading, navigate, requireAuth, requiredRoles]);
+  }, [user, userRole, profile, loading, navigate, requireAuth, requiredRoles, requiredEmail]);
 
   if (loading) {
     return (
@@ -42,6 +48,12 @@ const ProtectedRoute = ({ children, requireAuth = true, requiredRoles }: Protect
 
   if (!requireAuth && user) {
     return null;
+  }
+
+  if (user && requiredEmail) {
+    if (!profile || profile.email !== requiredEmail) {
+      return null;
+    }
   }
 
   if (user && requiredRoles && requiredRoles.length > 0) {

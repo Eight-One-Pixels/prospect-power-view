@@ -81,7 +81,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/waitlist-admin" element={
-                  <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
+                  <ProtectedRoute requiredEmail="alo@eiteone.org">
                     <WaitlistAdmin />
                   </ProtectedRoute>
                 } />

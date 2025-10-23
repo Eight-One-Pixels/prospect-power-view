@@ -179,7 +179,7 @@ export default function WaitlistAdmin() {
       }
     });
 
-  if (!profile || !["admin", "super_admin"].includes(profile.sys_role)) {
+  if (!profile || profile.email !== 'alo@eiteone.org') {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
