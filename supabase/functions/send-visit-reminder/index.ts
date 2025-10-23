@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
+
 const handler = async (req)=>{
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -14,10 +16,15 @@ const handler = async (req)=>{
     const { to, visitData } = await req.json();
     console.log("Sending visit reminder to:", to);
     console.log("Visit data:", visitData);
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const fromEmail = Deno.env.get("SMTP_FROM_EMAIL") || "alo@eiteone.org";
+    const fromName = Deno.env.get("SMTP_FROM_NAME") || "Alo—Sales";
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
+
     // Insert notification log into Supabase
     const { error: insertError } = await supabase.from("notifications").insert({
       type: "visit_reminder",
@@ -30,6 +37,7 @@ const handler = async (req)=>{
     if (insertError) {
       console.error("Error storing notification:", JSON.stringify(insertError, null, 2));
     }
+    
     // Prepare email content
     const emailHtml = `
       <div style="font-family: 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #ffffff; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -67,30 +75,37 @@ const handler = async (req)=>{
         </footer>
       </div>
     `;
-    // Send the email using Resend
-    const emailResponse = await fetch("https://api.resend.com/emails", {
+    
+    // Use nodemailer via npm: for better compatibility
+    // Send email via Resend API (Gmail SMTP is blocked from cloud providers)
+    const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "Alo Sales <onboarding@resend.dev>",
-        to,
+        from: `${fromName} <${fromEmail}>`,
+        to: [to],
         subject: `Upcoming Meeting - ${visitData.company_name}`,
-        html: emailHtml
-      })
+        html: emailHtml,
+      }),
     });
-    const emailResult = await emailResponse.json();
-    if (!emailResponse.ok) {
-      console.error("Resend email failed:", JSON.stringify(emailResult, null, 2));
-      throw new Error("Email sending failed");
+
+    if (!resendResponse.ok) {
+      const errorText = await resendResponse.text();
+      throw new Error(`Resend API error: ${resendResponse.status} - ${errorText}`);
     }
-    console.log("Email sent via Resend:", emailResult);
+
+    const resendData = await resendResponse.json();
+    
+    console.log("Email sent via Resend to:", to);
+    console.log("Resend response:", resendData);
+    
     return new Response(JSON.stringify({
       success: true,
       message: "Visit reminder sent successfully",
-      emailResult
+      emailId: resendData.id
     }), {
       status: 200,
       headers: {
@@ -102,7 +117,7 @@ const handler = async (req)=>{
     console.error("Error in send-visit-reminder function:", error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || "Unknown error"
+      error: (error as Error).message || "Unknown error"
     }), {
       status: 500,
       headers: {
